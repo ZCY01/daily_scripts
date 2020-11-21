@@ -1,0 +1,14 @@
+{
+	"name": "daily_scripts tasks",
+	"task": [
+		{
+			"config": "5 0 * * * https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_priceProtect.js, tag=京东价格保护, img-url=https://raw.githubusercontent.com/ZCY01/img/master/pricev1.png, enabled=true",
+			"addons": "https://raw.githubusercontent.com/ZCY01/daily_scripts/main/qx_rewrite.txt, tag=京东价格保护"
+		},
+		{
+			"config": "1,16,31,46 7-20 * * * https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jsz.js, tag=金手指",
+			"addons": "https://raw.githubusercontent.com/ZCY01/daily_scripts/main/qx_rewrite.txt, tag=金手指"
+		}
+	],
+	"description": "https://github.com/ZCY01/daily_scripts"
+}

@@ -1,0 +1,4 @@
+hostname = apponlie.sahaj.cn, api.m.jd.com
+
+http:\/\/apponlie\.sahaj\.cn\/user\/myInfo url script-request-header https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jsz.js
+https:\/\/api\.m\.jd\.com\/api\?appid=siteppM&functionId=siteppM_priceskusPull url script-request-body https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_priceProtectRewrite.js
