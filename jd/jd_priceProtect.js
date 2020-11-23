@@ -16,8 +16,7 @@ const selfdomain = 'https://msitepp-fm.jd.com/';
 const unifiedGatewayName = 'https://api.m.jd.com/';
 
 //IOS等用户直接用NobyDa的jd cookie
-let cookiesArr = [],
-	cookie = '';
+let cookiesArr = [], cookie = ''
 if ($.isNode()) {
 	Object.keys(jdCookieNode).forEach((item) => {
 		cookiesArr.push(jdCookieNode[item])
@@ -27,7 +26,7 @@ if ($.isNode()) {
 	cookiesArr.push($.getdata('CookieJD'));
 	cookiesArr.push($.getdata('CookieJD2'));
 }
-const jdNotify = $.getdata('jdPriceProtectNotify'); //是否关闭通知，false打开通知推送，true关闭通知推送
+const jdNotify = $.getdata('jdPriceProtectNotify') || false //是否关闭通知，false打开通知推送，true关闭通知推送
 
 !(async () => {
 	if (!cookiesArr[0]) {
@@ -37,25 +36,10 @@ const jdNotify = $.getdata('jdPriceProtectNotify'); //是否关闭通知，false
 	}
 	for (let i = 0; i < cookiesArr.length; i++) {
 		if (cookiesArr[i]) {
+
 			cookie = cookiesArr[i];
 			$.UserName = decodeURIComponent(cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1])
 			$.index = i + 1;
-			$.isLogin = true;
-			$.nickName = '';
-			await TotalBean();
-			console.log(`\n开始【京东账号${$.index}】${$.nickName || $.UserName}\n`);
-			if (!$.isLogin) {
-				$.msg($.name, `【提示】cookie已失效`, `京东账号${$.index} ${$.nickName || $.UserName}\n请重新登录获取\nhttps://bean.m.jd.com/`, {
-					"open-url": "https://bean.m.jd.com/"
-				});
-
-				if ($.isNode()) {
-					await notify.sendNotify(`${$.name}cookie已失效 - ${$.UserName}`, `京东账号${$.index} ${$.UserName}\n请重新登录获取cookie`);
-				} else {
-					$.setdata('', `CookieJD${i ? i + 1 : "" }`); //cookie失效，故清空cookie。$.setdata('', `CookieJD${i ? i + 1 : "" }`);//cookie失效，故清空cookie。
-				}
-				continue
-			}
 
 			$.hasNext = true
 			$.refundtotalamount = 0
@@ -163,13 +147,7 @@ function getApplyData(page) {
 		paramObj.type = $.HyperParam.type_hid
 		paramObj.forcebot = $.HyperParam.forcebot
 
-		if ($.HyperParam.useColorApi == "true") {
-			urlStr = unifiedGatewayName + "api?appid=siteppM&functionId=siteppM_priceskusPull&forcebot=" + $.HyperParam.forcebot + "&t=" + new Date().getTime();
-		} else {
-			urlStr = selfdomain + "rest/priceprophone/priceskusPull";
-		}
-		const options = request_option(urlStr, paramObj)
-		$.post(options, (err, resp, data) => {
+		$.post(taskurl('siteppM_priceskusPull', paramObj), (err, resp, data) => {
 			try {
 				if (err) {
 					console.log(`🚫 获取价格保护列表: ${JSON.stringify(err)}`)
@@ -233,16 +211,8 @@ function skuApply(order) {
 		paramObj.forcebot = $.HyperParam.forcebot
 		paramObj.pinType = $.HyperParam.pinType
 
-		var urlStr = null;
-		if ($.HyperParam.useColorApi == "true") {
-			urlStr = unifiedGatewayName + "api?appid=siteppM&functionId=siteppM_proApply&forcebot=" + $.HyperParam.forcebot + "&t=" + new Date().getTime();
-		} else {
-			urlStr = selfdomain + "rest/priceprophone/skuProtectApply";
-		}
-
 		console.log(`🚀 ${order.title} 正在价格保护...`)
-		const options = request_option(urlStr, paramObj)
-		$.post(options, (err, resp, data) => {
+		$.post(taskurl('siteppM_proApply', paramObj), (err, resp, data) => {
 			try {
 				if (err) {
 					console.log(`🚫 ${order.title} 价格保护 API请求失败，${JSON.stringify(err)}`)
@@ -276,14 +246,8 @@ function HistoryResultQuery(order) {
 		paramObj.pin = $.HyperParam.pin
 		paramObj.forcebot = $.HyperParam.forcebot
 		paramObj.pinType = $.HyperParam.pinType
-		let urlStr = null;
-		if ($.HyperParam.useColorApi == "true") {
-			urlStr = unifiedGatewayName + "api?appid=siteppM&functionId=siteppM_skuProResultPin&forcebot=" + $.HyperParam.forcebot + "&t=" + new Date().getTime();
-		} else {
-			urlStr = selfdomain + "rest/priceprophone/skuProResultPin";
-		}
-		const options = request_option(urlStr, paramObj)
-		$.post(options, (err, resp, data) => {
+
+		$.post(taskurl('siteppM_skuProResultPin', paramObj), (err, resp, data) => {
 			try {
 				if (err) {
 					reject(`🚫 ${order.title} 历史查询失败，请检查网路重试`)
@@ -318,19 +282,12 @@ function getApplyResult() {
 	}
 	return new Promise(async (resolve, reject) => {
 		let proSkuApplyIds = Object.keys($.applyMap).join(",");
-		let urlStr = null;
 		let paramObj = {};
 		paramObj.proSkuApplyIds = proSkuApplyIds;
 		paramObj.pin = $.HyperParam.pin
 		paramObj.type = $.HyperParam.type_hid
-		if ($.HyperParam.useColorApi == "true") {
-			urlStr = unifiedGatewayName + "api?appid=siteppM&functionId=siteppM_moreApplyResult&forcebot=" + $.HyperParam.forcebot + "&t=" + new Date().getTime();
-		} else {
-			urlStr = selfdomain + "rest/priceprophone/moreApplyResult";
-		}
-		const options = request_option(urlStr, paramObj)
 
-		$.post(options, (err, resp, data) => {
+		$.post(taskurl('siteppM_moreApplyResult', paramObj), (err, resp, data) => {
 			try {
 				if (err) {
 					console.log(`🚫 ${$.name} 获得查结果 ${JSON.stringify(err)}`)
@@ -351,9 +308,13 @@ function getApplyResult() {
 	})
 }
 
-function request_option(url, body) {
-	const options = {
-		"url": url,
+function taskurl(functionid, body) {
+	let urlStr = selfdomain + "rest/priceprophone/priceskusPull"
+	if ($.HyperParam.useColorApi == "true") {
+		urlStr = unifiedGatewayName + "api?appid=siteppM&functionId=" + functionid + "&forcebot=" + $.HyperParam.forcebot + "&t=" + new Date().getTime()
+	}
+	return {
+		"url": urlStr,
 		"headers": {
 			'Host': $.HyperParam.useColorApi == 'true' ? 'api.m.jd.com' : 'msitepp-fm.jd.com',
 			'Accept': '*/*',
@@ -368,56 +329,12 @@ function request_option(url, body) {
 		},
 		"body": body ? `body=${JSON.stringify(body)}` : undefined
 	}
-	return options
-}
-
-
-function TotalBean() {
-	return new Promise(async resolve => {
-		const options = {
-			"url": `https://wq.jd.com/user/info/QueryJDUserInfo?sceneval=2`,
-			"headers": {
-				"Accept": "application/json,text/plain, */*",
-				"Content-Type": "application/x-www-form-urlencoded",
-				"Accept-Encoding": "gzip, deflate, br",
-				"Accept-Language": "zh-cn",
-				"Connection": "keep-alive",
-				"Cookie": cookie,
-				"Referer": "https://wqs.jd.com/my/jingdou/my.shtml?sceneval=2",
-				"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
-			}
-		}
-		$.post(options, (err, resp, data) => {
-			try {
-				if (err) {
-					console.log(`${JSON.stringify(err)}`)
-					console.log(`${$.name} API请求失败，请检查网路重试`)
-				} else {
-					if (data) {
-						data = JSON.parse(data);
-						if (data['retcode'] === 13) {
-							$.isLogin = false; //cookie过期
-							return
-						}
-						$.nickName = data['base'].nickname;
-					} else {
-						console.log(`京东服务器返回空数据`)
-					}
-				}
-			} catch (e) {
-				$.logErr(e, resp)
-			} finally {
-				resolve();
-			}
-		})
-	})
 }
 
 function showMsg() {
 	console.log(`🎉 本次价格保护金额：${$.refundtotalamount}💰`)
-	// $.msg($.name, `价格保护成功`, `京东账号${$.index} ${$.nickName || $.UserName}\n🎉 本次价格保护金额：${$.refundtotalamount}💰`, {"open-url": "https://msitepp-fm.jd.com/rest/priceprophone/priceProPhoneMenu"});
-	if ($.refundtotalamount) {
-		$.msg($.name, ``, `京东账号${$.index} ${$.nickName || $.UserName}\n🎉 本次价格保护金额：${$.refundtotalamount}💰`, {
+	if ($.refundtotalamount && !jdNotify) {
+		$.msg($.name, ``, `京东账号${$.index} ${$.UserName}\n🎉 本次价格保护金额：${$.refundtotalamount}💰`, {
 			"open-url": "https://msitepp-fm.jd.com/rest/priceprophone/priceProPhoneMenu"
 		});
 	}
