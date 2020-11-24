@@ -1,0 +1,175 @@
+{
+	"id": "zcy01.app.sub",
+	"name": "zcy01脚本订阅",
+	"author": "@zcy01",
+	"icon": "https://avatars0.githubusercontent.com/u/15939669?s=460&u=54dc80f324bb7339961513959ddd7d8df1c0d0f8&v=4",
+	"repo": "https://github.com/ZCY01/daily_scripts",
+	"apps": [{
+		"id": "JD_TRY",
+		"name": "京东试用管理",
+		"keys": ["全部商品", "家用电器", "手机数码", "电脑办公", "家居家装", "美妆护肤", "服饰鞋包", "母婴玩具", "生鲜美食", "图书音像", "钟表奢品", "个人护理", "家庭清洁", "食品饮料", "更多惊喜", "全部试用", "普通试用", "闪电试用", "30天试用"],
+		"descs_html": [],
+		"settings": [{
+				"id": "split1",
+				"name": "商品类型⬇️",
+				"val": "",
+				"type": "text",
+				"desc": "商品类型，选择后试用该类型商品"
+			},
+			{
+				"id": "全部商品",
+				"name": "全部商品",
+				"val": false,
+				"type": "boolean",
+				"desc": "开启后请取消其他商品类型"
+			},
+			{
+				"id": "家用电器",
+				"name": "家用电器",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 家用电器"
+			},
+			{
+				"id": "手机数码",
+				"name": "手机数码",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 手机数码"
+			},
+			{
+				"id": "电脑办公",
+				"name": "电脑办公",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 电脑办公"
+			},
+			{
+				"id": "家居家装",
+				"name": "家居家装",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 家居家装"
+			},
+			{
+				"id": "美妆护肤",
+				"name": "美妆护肤",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 美妆护肤"
+			},
+			{
+				"id": "服饰鞋包",
+				"name": "服饰鞋包",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 服饰鞋包"
+			},
+			{
+				"id": "母婴玩具",
+				"name": "母婴玩具",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 母婴玩具"
+			},
+			{
+				"id": "生鲜美食",
+				"name": "生鲜美食",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 生鲜美食"
+			},
+			{
+				"id": "生鲜美食",
+				"name": "生鲜美食",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 生鲜美食"
+			},
+			{
+				"id": "图书音像",
+				"name": "图书音像",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 图书音像"
+			},
+			{
+				"id": "钟表奢品",
+				"name": "钟表奢品",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 钟表奢品"
+			},
+			{
+				"id": "个人护理",
+				"name": "个人护理",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 个人护理"
+			},
+			{
+				"id": "家庭清洁",
+				"name": "家庭清洁",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 家庭清洁"
+			},
+			{
+				"id": "食品饮料",
+				"name": "食品饮料",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 食品饮料"
+			},
+			{
+				"id": "更多惊喜",
+				"name": "更多惊喜",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用 更多惊喜"
+			},
+			{
+				"id": "split2",
+				"name": "试用类型⬇️",
+				"val": "",
+				"type": "text",
+				"desc": "试用类型，选择后试用该类型"
+			},
+			{
+				"id": "全部试用",
+				"name": "全部试用",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用类型： 全部试用"
+			},
+			{
+				"id": "普通试用",
+				"name": "普通试用",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用类型： 普通试用"
+			},
+			{
+				"id": "闪电试用",
+				"name": "闪电试用",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用类型： 闪电试用"
+			},
+			{
+				"id": "30天试用",
+				"name": "30天试用",
+				"val": false,
+				"type": "boolean",
+				"desc": "试用类型： 30天试用"
+			}
+		],
+		"icons": [
+			"https://raw.githubusercontent.com/Orz-3/mini/master/jd.png",
+			"https://raw.githubusercontent.com/Orz-3/task/master/jd.png"
+		],
+		"author": "@zcy01",
+		"repo": "https://github.com/ZCY01/daily_scripts",
+		"script": "https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_try.js"
+	}]
+}
