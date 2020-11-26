@@ -60,6 +60,7 @@ if ($.isNode()) {
 	cookiesArr.push($.getdata('CookieJD2'));
 }
 const jdNotify = $.getdata('jdTryNotify') || false //是否关闭通知，false打开通知推送，true关闭通知推送
+const jdDebug = $.getdata('jdTryDebug') || false
 
 !(async () => {
 	if (!cookiesArr[0]) {

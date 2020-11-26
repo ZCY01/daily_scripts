@@ -27,6 +27,7 @@ if ($.isNode()) {
 	cookiesArr.push($.getdata('CookieJD2'));
 }
 const jdNotify = $.getdata('jdPriceProtectNotify') || false //是否关闭通知，false打开通知推送，true关闭通知推送
+const jdDebug = $.getdata('jdPriceProtectDebug') || false
 
 !(async () => {
 	if (!cookiesArr[0]) {
@@ -80,7 +81,7 @@ const jdNotify = $.getdata('jdPriceProtectNotify') || false //是否关闭通知
 		}
 	}
 })()
-.catch((e) => $.logErr(e))
+.catch((e) => {$.logErr(e), debug(e)})
 	.finally(() => $.done())
 
 const getValueById = function (text, id) {
@@ -342,6 +343,12 @@ function showMsg() {
 			"open-url": "https://msitepp-fm.jd.com/rest/priceprophone/priceProPhoneMenu"
 		});
 	}
+}
+
+function debug(msg){
+	if(!jdDebug) return
+	$.msg($.name, ``, `${msg} 错误`)
+
 }
 
 // prettier-ignore

@@ -17,6 +17,13 @@
 				"desc": "运行京东试用脚本时不发出系统弹窗通知"
 			},
 			{
+				"id": "jdTryDebug",
+				"name": "开启调试",
+				"val": false,
+				"type": "boolean",
+				"desc": "运行京东试用脚本时发出错误弹窗通知"
+			},
+			{
 				"id": "filter",
 				"name": "商品过滤器",
 				"val": "教程&软件&英语&辅导&培训",
@@ -196,13 +203,18 @@
 		"id": "JD_PRICE_PROTECT",
 		"name": "京东价格保护",
 		"keys": [],
-		"descs_html": [],
 		"settings": [{
 			"id": "jdPriceProtectNotify",
 			"name": "静默运行",
 			"val": false,
 			"type": "boolean",
 			"desc": "运行京东价格保护脚本时不发出系统弹窗通知"
+		},{
+			"id": "jdPriceProtectDebug",
+			"name": "开启调试",
+			"val": false,
+			"type": "boolean",
+			"desc": "运行京东价格保护脚本时发出错误弹窗通知"
 		}],
 		"icons": [
 			"https://raw.githubusercontent.com/ZCY01/img/master/pricev1.png",
