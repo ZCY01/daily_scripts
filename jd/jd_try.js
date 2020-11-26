@@ -125,13 +125,14 @@ function requireConfig() {
 }
 
 function isLogin() {
-	return new Promise((resolve, reject) => {
+	return new Promise(resolve => {
 		$.get(taskurl(`${selfdomain}/isLogin`), (err, resp, data) => {
 			try {
+				if(err) throw new Error(JSON.stringify(err))
 				data = JSON.parse(data)
 				$.isLogin = data.isLogin
 			} catch (e) {
-				console.log(`💩 cookie 失效，结束任务`)
+				$.log(`💩 ${arguments.callee.name.toString()}`, e, JSON.stringify(data))
 			} finally {
 				resolve()
 			}
@@ -141,11 +142,12 @@ function isLogin() {
 
 function getGoodListByCond(cids, page, pageSize, type, state) {
 
-	return new Promise((resolve, reject) => {
+	return new Promise(resolve => {
 		let option = taskurl(`${selfdomain}/activity/list?pb=1&cids=${cids}&page=${page}&pageSize=${pageSize}&type=${type}&state=${state}`)
 		delete option.headers['Cookie']
 		$.get(option, (err, resp, data) => {
 			try {
+				if(err) throw new Error(JSON.stringify(err))
 				data = JSON.parse(data)
 				if (data.success) {
 					$.totalPages = data.data.pages
@@ -154,7 +156,7 @@ function getGoodListByCond(cids, page, pageSize, type, state) {
 					console.log(`💩 获得 ${cids} ${page} 列表失败: ${data.message}`)
 				}
 			} catch (e) {
-				console.log(`💩 获得 ${cids} ${page} 列表失败: ${e} ${JSON.stringify(data)}`);
+				$.log(`💩 ${arguments.callee.name.toString()} 获得 ${cids} ${page} 列表失败`, e, JSON.stringify(data))
 			} finally {
 				resolve()
 			}
@@ -204,9 +206,10 @@ async function filterGoodList() {
 
 async function getApplyStateByActivityIds() {
 	function opt(ids) {
-		return new Promise((resolve, reject) => {
+		return new Promise(resolve => {
 			$.get(taskurl(`${selfdomain}/getApplyStateByActivityIds?activityIds=${ids.join(',')}`), (err, resp, data) => {
 				try {
+					if(err) throw new Error(JSON.stringify(err))
 					data = JSON.parse(data)
 					$.goodList = $.goodList.filter(good => {
 						for (let apply of data) {
@@ -217,7 +220,7 @@ async function getApplyStateByActivityIds() {
 						return true
 					})
 				} catch (e) {
-					console.log(`💩 getApplyStateByActivityIds ${e}`)
+					$.log(`💩 ${arguments.callee.name.toString()}`, e, JSON.stringify(data))
 
 					$.goodList = $.goodList.filter(good => {
 						for (let id of ids) {
@@ -247,14 +250,15 @@ async function getApplyStateByActivityIds() {
 }
 
 function canTry(good) {
-	return new Promise((resolve, reject) => {
+	return new Promise(resolve => {
 		let ret = false
 		$.get(taskurl(`${selfdomain}/activity?id=${good.id}`), (err, resp, data) => {
 			try {
+				if(err) throw new Error(JSON.stringify(err))
 				ret = data.indexOf('trySku') != -1
 				good.shopId = eval(data.match(/"shopId":(\d+)/)[1])
 			} catch (e) {
-				reject(`💩 ${good.id} 获取详细信息失败`)
+				$.log(`💩 ${good.id} 获取商品信息失败`, e, JSON.stringify(data))
 			} finally {
 				resolve(ret)
 			}
@@ -263,35 +267,36 @@ function canTry(good) {
 }
 
 function isFollowed(good) {
-	return new Promise((resolve, reject) => {
+	return new Promise(resolve => {
 		$.get(taskurl(`${selfdomain}/isFollowed?id=${good.shopId}`, good.id), (err, resp, data) => {
-			// {"code":"F10000","msg":null,"data":false,"success":true}
 			try {
+				if(err) throw new Error(JSON.stringify(err))
 				data = JSON.parse(data)
-				// console.log(`${good.id} 🛒${good.trialName.substr(0,15)}🛒 isFollowed: ${data.success && data.data}`)
 				resolve(data.success && data.data)
 			} catch (e) {
-				reject(`💩 isFollow err:${e} ${JSON.stringify(data)}`)
+				$.log(`💩 ${good.id} 检查关注失败`, e, JSON.stringify(data))
+			} finally {
+				resolve(false)
 			}
 		})
 	})
 }
 
 function followShop(good) {
-	return new Promise((resolve, reject) => {
+	return new Promise(resolve => {
 		$.get(taskurl(`${selfdomain}/followShop?id=${good.shopId}`, good.id), (err, resp, data) => {
-			// {"code":"F10000","msg":null,"data":true,"success":true}
-			// F0410 关注数超过上限了哦~先清理下关注列表吧
 			try {
+				if(err) throw new Error(JSON.stringify(err))
 				data = JSON.parse(data)
-				// console.log(`${good.id} 🛒${good.trialName.substr(0,15)}🛒 followShop: ${data.success && data.data}`)
 				if(data.code == 'F0410'){
 					$.running = false
 					$.stopMsg = data.msg || "关注数超过上限了哦~先清理下关注列表吧"
 				}
 				resolve(data.success && data.data)
 			} catch (e) {
-				reject(`💩 followShop err:${e} ${JSON.stringify(data)}`)
+				$.log(`💩 ${good.id} 关注商店失败`, e, JSON.stringify(data))
+			} finally {
+				resolve(false)
 			}
 		})
 	})
@@ -302,25 +307,21 @@ async function tryGoodList() {
 	$.running = true
 	for (let i = 0; i < $.goodList.length && $.running; i++) {
 		let good = $.goodList[i]
-		try {
-			if (!await canTry(good)) continue
-			// 如果没有关注且关注失败
-			if (!await isFollowed(good) && !await followShop(good)) continue
-			// 两个申请间隔不能太短，放在下面有利于确保 follwShop 完成
-			await $.wait(5000)
-			// 关注完毕，即将试用
-			await doTry(good)
-		} catch (e) {
-			console.log(`💩 ${good.id} ${good.trialName.substr(0,15)} 试用失败 ${e}`)
-		}
+		if (!await canTry(good)) continue
+		// 如果没有关注且关注失败
+		if (!await isFollowed(good) && !await followShop(good)) continue
+		// 两个申请间隔不能太短，放在下面有利于确保 follwShop 完成
+		await $.wait(5000)
+		// 关注完毕，即将试用
+		await doTry(good)
 	}
 }
 
 async function doTry(good) {
-	return new Promise((resolve, reject) => {
+	return new Promise(resolve => {
 		$.get(taskurl(`${selfdomain}/migrate/apply?activityId=${good.id}&source=1&_s=m`, good.id), (err, resp, data) => {
-			// /**/jsonp5({"success":true,"code":"1","bsCode":null,"message":"申请成功！","data":{"mobile":""}});
 			try {
+				if(err) throw new Error(JSON.stringify(err))
 				data = JSON.parse(data)
 				if (data.success) {
 					$.totalTry += 1
@@ -332,7 +333,7 @@ async function doTry(good) {
 					console.log(`🤬 ${good.id} 🛒${good.trialName.substr(0,15)}🛒 ${JSON.stringify(data)}`)
 				}
 			} catch (e) {
-				reject(`💩 ${good.id} 申请失败 ${JSON.stringify(data)}`)
+				$.log(`💩 ${good.id} ${good.trialName.substr(0,15)} 试用失败`, e, JSON.stringify(data))
 			} finally {
 				resolve()
 			}
@@ -342,7 +343,7 @@ async function doTry(good) {
 
 async function getSuccessList() {
 	// 一页12个商品，不会吧不会吧，不会有人一次性中奖12个商品吧？！🤔
-	return new Promise((resolve, reject) => {
+	return new Promise(resolve => {
 		const option = {
 			url: `https://try.jd.com/my/tryList?selected=2&page=1&tryVersion=2&_s=m`,
 			headers: {
@@ -358,6 +359,7 @@ async function getSuccessList() {
 		}
 		$.get(option, (err, resp, data) => {
 			try {
+				if(err) throw new Error(JSON.stringify(err))
 				data = JSON.parse(data)
 				if (data.success) {
 					$.successList = data.data.data.filter(item => {
@@ -367,7 +369,7 @@ async function getSuccessList() {
 					console.log(`💩 获得成功列表失败: ${data.message}`)
 				}
 			} catch (e) {
-				console.log(`💩 获得成功列表失败: ${e}`)
+				$.log(`💩 获得成功列表失败`, e, JSON.stringify(data))
 			} finally {
 				resolve()
 			}
