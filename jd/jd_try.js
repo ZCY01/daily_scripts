@@ -85,7 +85,6 @@ const jdNotify = $.getdata('jdTryNotify') || false //是否关闭通知，false�
 				continue
 			}
 
-			$.stopMsg = '未知'
 			$.totalTry = 0
 			$.goodList = []
 			$.successList = []
@@ -181,7 +180,7 @@ async function getGoodList() {
 }
 
 async function filterGoodList() {
-	console.log(`⏰ 过滤商品列表`)
+	console.log(`⏰ 过滤商品列表，当前共有${$.goodList.length}个商品`)
 	const now = Date.now()
 	const oneMoreDay = now + 24 * 60 * 60 * 1000
 	$.goodList = $.goodList.filter(good => {
@@ -305,6 +304,7 @@ function followShop(good) {
 async function tryGoodList() {
 	console.log(`⏰ 即将申请 ${$.goodList.length} 个商品`)
 	$.running = true
+	$.stopMsg = '申请完毕'
 	for (let i = 0; i < $.goodList.length && $.running; i++) {
 		let good = $.goodList[i]
 		if (!await canTry(good)) continue
