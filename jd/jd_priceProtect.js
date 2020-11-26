@@ -146,6 +146,8 @@ function getApplyData(page) {
 		paramObj.sid = $.HyperParam.sid_hid
 		paramObj.type = $.HyperParam.type_hid
 		paramObj.forcebot = $.HyperParam.forcebot
+		paramObj.token = '';
+		paramObj.feSt = 'f';
 
 		$.post(taskurl('siteppM_priceskusPull', paramObj), (err, resp, data) => {
 			try {
@@ -210,6 +212,8 @@ function skuApply(order) {
 		paramObj.refundtype = order.refundtype
 		paramObj.forcebot = $.HyperParam.forcebot
 		paramObj.pinType = $.HyperParam.pinType
+		paramObj.token = ''
+		paramObj.feSt = 'f'
 
 		console.log(`🚀 ${order.title} 正在价格保护...`)
 		$.post(taskurl('siteppM_proApply', paramObj), (err, resp, data) => {
