@@ -5,7 +5,7 @@
 ==========================Quantumultx=========================
 [task_local]
 # 京东价格保护
-5 0 * * * https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_priceProtect.js, tag=京东价格保护, img-url=https://raw.githubusercontent.com/ZCY01/img/master/price.png, enabled=true
+5 0 * * * https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_priceProtect.js, tag=京东价格保护, img-url=https://raw.githubusercontent.com/ZCY01/img/master/pricev1.png, enabled=true
 */
 const $ = new Env('京东价格保护');
 //Node.js用户请在jdCookie.js处填写京东ck;
