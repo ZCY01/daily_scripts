@@ -49,8 +49,7 @@ const typeMap = {
 }
 
 //IOS等用户直接用NobyDa的jd cookie
-let cookiesArr = [],
-	cookie = ''
+let cookiesArr = [], cookie = ''
 if ($.isNode()) {
 	Object.keys(jdCookieNode).forEach((item) => {
 		cookiesArr.push(jdCookieNode[item])
@@ -64,9 +63,10 @@ const jdNotify = $.getdata('jdTryNotify') || false //是否关闭通知，false�
 
 !(async () => {
 	if (!cookiesArr[0]) {
-		$.msg('价格保护运行失败', '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/', {
+		$.msg(`${$.name}运行失败`, '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/', {
 			"open-url": "https://bean.m.jd.com/"
 		});
+		return
 	}
 	requireConfig()
 	for (let i = 0; i < cookiesArr.length; i++) {
