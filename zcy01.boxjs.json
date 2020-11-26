@@ -7,7 +7,7 @@
 	"apps": [{
 		"id": "JD_TRY",
 		"name": "京东试用管理",
-		"keys": ["jdTryNotify","filter", "min_price", "page_size", "全部商品", "家用电器", "手机数码", "电脑办公", "家居家装", "美妆护肤", "服饰鞋包", "母婴玩具", "生鲜美食", "图书音像", "钟表奢品", "个人护理", "家庭清洁", "食品饮料", "更多惊喜", "全部试用", "普通试用", "闪电试用", "30天试用"],
+		"keys": [],
 		"descs_html": ["商品过滤器，剔除包含规则的商品，用英文 & 隔开，下面给出具体示例。"],
 		"settings": [{
 				"id": "jdTryNotify",
@@ -192,5 +192,24 @@
 		"author": "@zcy01",
 		"repo": "https://github.com/ZCY01/daily_scripts",
 		"script": "https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_try.js"
+	}, {
+		"id": "JD_PRICE_PROTECT",
+		"name": "京东价格保护",
+		"keys": [],
+		"descs_html": [],
+		"settings": [{
+			"id": "jdPriceProtectNotify",
+			"name": "静默运行",
+			"val": false,
+			"type": "boolean",
+			"desc": "运行京东价格保护脚本时不发出系统弹窗通知"
+		}],
+		"icons": [
+			"https://raw.githubusercontent.com/ZCY01/img/master/pricev1.png",
+			"https://raw.githubusercontent.com/ZCY01/img/master/pricev1.png"
+		],
+		"author": "@zcy01",
+		"repo": "https://github.com/ZCY01/daily_scripts",
+		"script": "https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_priceProtect.js"
 	}]
 }
