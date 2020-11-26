@@ -17,6 +17,27 @@
 				"desc": "运行京东试用脚本时不发出系统弹窗通知"
 			},
 			{
+				"id": "filter",
+				"name": "商品过滤器",
+				"val": "教程&软件&英语&辅导&培训",
+				"type": "text",
+				"desc": "商品过滤器，以&间隔分开，剔除包含规则的商品"
+			},
+			{
+				"id": "min_price",
+				"name": "商品过滤器",
+				"val": 0,
+				"type": "number",
+				"desc": "商品最低价格（包含）"
+			},
+			{
+				"id": "page_size",
+				"name": "每页商品数量",
+				"val": 12,
+				"type": "number",
+				"desc": "收集商品时每页的商品数量，越大收集越快"
+			},
+			{
 				"id": "split1",
 				"name": "商品类型⬇️",
 				"val": "",
@@ -33,28 +54,28 @@
 			{
 				"id": "家用电器",
 				"name": "家用电器",
-				"val": false,
+				"val": true,
 				"type": "boolean",
 				"desc": "试用 家用电器"
 			},
 			{
 				"id": "手机数码",
 				"name": "手机数码",
-				"val": false,
+				"val": true,
 				"type": "boolean",
 				"desc": "试用 手机数码"
 			},
 			{
 				"id": "电脑办公",
 				"name": "电脑办公",
-				"val": false,
+				"val": true,
 				"type": "boolean",
 				"desc": "试用 电脑办公"
 			},
 			{
 				"id": "家居家装",
 				"name": "家居家装",
-				"val": false,
+				"val": true,
 				"type": "boolean",
 				"desc": "试用 家居家装"
 			},
@@ -78,13 +99,6 @@
 				"val": false,
 				"type": "boolean",
 				"desc": "试用 母婴玩具"
-			},
-			{
-				"id": "生鲜美食",
-				"name": "生鲜美食",
-				"val": false,
-				"type": "boolean",
-				"desc": "试用 生鲜美食"
 			},
 			{
 				"id": "生鲜美食",
@@ -152,14 +166,14 @@
 			{
 				"id": "普通试用",
 				"name": "普通试用",
-				"val": false,
+				"val": true,
 				"type": "boolean",
 				"desc": "试用类型： 普通试用"
 			},
 			{
 				"id": "闪电试用",
 				"name": "闪电试用",
-				"val": false,
+				"val": true,
 				"type": "boolean",
 				"desc": "试用类型： 闪电试用"
 			},
@@ -169,27 +183,6 @@
 				"val": false,
 				"type": "boolean",
 				"desc": "试用类型： 30天试用"
-			},
-			{
-				"id": "split3",
-				"name": "其他设置⬇️",
-				"val": "",
-				"type": "text",
-				"desc": "其他设置⬇"
-			},
-			{
-				"id": "filter",
-				"name": "商品过滤器",
-				"val": "教程&软件&英语&辅导&培训",
-				"type": "text",
-				"desc": "商品过滤器，以&间隔分开，剔除包含规则的商品"
-			},
-			{
-				"id": "min_price",
-				"name": "商品过滤器",
-				"val": 0,
-				"type": "number",
-				"desc": "商品最低价格（包含）"
 			}
 		],
 		"icons": [

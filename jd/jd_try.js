@@ -20,7 +20,7 @@ const notify = $.isNode() ? require('./sendNotify') : ''
 
 const selfdomain = 'https://try.m.jd.com'
 $.pageSize = 12
-let cidsList = ["家用电器", "手机数码", "电脑办公", "家居家装", "美妆护肤", "个人护理", "食品饮料"]
+let cidsList = ["家用电器", "手机数码", "电脑办公", "家居家装"]
 let typeList = ["普通试用", "闪电试用"]
 let goodFilters = "教程&软件&英语&辅导&培训".split('&')
 let minPrice = 0
@@ -119,6 +119,8 @@ function requireConfig() {
 	}
 	goodFilters = $.getdata('filter').split('&')
 	minPrice = Number($.getdata('min_price'))
+	$.pageSize = Number($.getdata('page_size'))
+	console.log({cidsList, typeList, goodFilters, minPrice, pageSize:$.pageSize, jdNotify})
 }
 
 function isLogin() {
