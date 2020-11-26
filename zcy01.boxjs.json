@@ -12,7 +12,7 @@
 		"settings": [{
 				"id": "jdTryNotify",
 				"name": "静默运行",
-				"val": true,
+				"val": false,
 				"type": "boolean",
 				"desc": "运行京东试用脚本时不发出系统弹窗通知"
 			},
@@ -193,8 +193,8 @@
 			}
 		],
 		"icons": [
-			"https://raw.githubusercontent.com/Orz-3/mini/master/jd.png",
-			"https://raw.githubusercontent.com/Orz-3/task/master/jd.png"
+			"https://raw.githubusercontent.com/ZCY01/img/master/jdtry.png",
+			"https://raw.githubusercontent.com/ZCY01/img/master/jdtry.png"
 		],
 		"author": "@zcy01",
 		"repo": "https://github.com/ZCY01/daily_scripts",

@@ -1,4 +1,17 @@
 /*
+京东价格保护：脚本更新地址 https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_try.js
+脚本兼容: QuantumultX, Node.js
+
+⚠️ 非常耗时的脚本。最多可能执行半小时！
+每天最多关注300个商店，但用户商店关注上限为500个。
+请配合取关脚本试用，使用 jd_unsubscribe.js 提前取关至少250个商店确保京东试用脚本正常运行。
+==========================Quantumultx=========================
+[task_local]
+# 取关京东店铺商品，请在 boxjs 修改取消关注店铺数量
+5 10 * * * https://raw.githubusercontent.com/lxk0301/jd_scripts/master/jd_unsubscribe.js, tag=取关京东店铺商品, enabled=true
+
+# 京东价格保护
+30 10 * * * https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_try.js, tag=京东试用, img-url=https://raw.githubusercontent.com/ZCY01/img/master/jdtry.png, enabled=true
  */
 const $ = new Env('京东试用')
 //Node.js用户请在jdCookie.js处填写京东ck;
@@ -72,6 +85,7 @@ const jdNotify = $.getdata('jdTryNotify') || false //是否关闭通知，false�
 				continue
 			}
 
+			$.stopMsg = '未知'
 			$.totalTry = 0
 			$.goodList = []
 			$.successList = []
@@ -95,12 +109,12 @@ function requireConfig() {
 	const typeKeys = Object.keys(typeMap)
 	for (let key of cidsKeys) {
 		const open = $.getdata(key)
-		console.log(`${key}, ${open}`)
+		// console.log(`${key}, ${open}`)
 		if (open == 'true') cidsList.push(key)
 	}
 	for (let key of typeKeys) {
 		const open = $.getdata(key)
-		console.log(`${key}, ${open}`)
+		// console.log(`${key}, ${open}`)
 		if (open == 'true') typeList.push(key)
 	}
 	goodFilters = $.getdata('filter').split('&')
@@ -264,9 +278,14 @@ function followShop(good) {
 	return new Promise((resolve, reject) => {
 		$.get(taskurl(`${selfdomain}/followShop?id=${good.shopId}`, good.id), (err, resp, data) => {
 			// {"code":"F10000","msg":null,"data":true,"success":true}
+			// F0410 关注数超过上限了哦~先清理下关注列表吧
 			try {
 				data = JSON.parse(data)
 				// console.log(`${good.id} 🛒${good.trialName.substr(0,15)}🛒 followShop: ${data.success && data.data}`)
+				if(data.code == 'F0410'){
+					$.running = false
+					$.stopMsg = data.msg || "关注数超过上限了哦~先清理下关注列表吧"
+				}
 				resolve(data.success && data.data)
 			} catch (e) {
 				reject(`💩 followShop err:${e} ${JSON.stringify(data)}`)
@@ -284,10 +303,10 @@ async function tryGoodList() {
 			if (!await canTry(good)) continue
 			// 如果没有关注且关注失败
 			if (!await isFollowed(good) && !await followShop(good)) continue
-			await $.wait(500)
+			// 两个申请间隔不能太短，放在下面有利于确保 follwShop 完成
+			await $.wait(5000)
 			// 关注完毕，即将试用
 			await doTry(good)
-			await $.wait(5000)
 		} catch (e) {
 			console.log(`💩 ${good.id} ${good.trialName.substr(0,15)} 试用失败 ${e}`)
 		}
@@ -304,6 +323,7 @@ async function doTry(good) {
 					$.totalTry += 1
 					console.log(`🥳 ${good.id} 🛒${good.trialName.substr(0,15)}🛒 ${data.message}`)
 				} else if (data.code == '-131') { // 每日300个商品
+					$.stopMsg = data.message
 					$.running = false
 				} else {
 					console.log(`🤬 ${good.id} 🛒${good.trialName.substr(0,15)}🛒 ${JSON.stringify(data)}`)
@@ -353,9 +373,14 @@ async function getSuccessList() {
 }
 
 function showMsg() {
-	$.msg($.name, ``, `京东账号${$.index} ${$.UserName}\n🎉 本次申请：${$.totalTry}🛒个商品🥳\n🎉 ${$.successList.length}个商品待领取🤩`, {
-		"open-url": 'https://try.m.jd.com/user'
-	})
+	let message = `京东账号${$.index} ${$.UserName}\n🎉 本次申请：${$.totalTry}个商品🛒\n🎉 ${$.successList.length}个商品待领取🤩\n🎉 结束原因：${$.stopMsg}`
+	if (!jdNotify || jdNotify === 'false') {
+		$.msg($.name, ``, message, {
+			"open-url": 'https://try.m.jd.com/user'
+		})
+	} else {
+		console.log(message)
+	}
 }
 
 function taskurl(url, goodId) {
