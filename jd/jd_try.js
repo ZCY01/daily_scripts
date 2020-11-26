@@ -103,24 +103,25 @@ const jdNotify = $.getdata('jdTryNotify') || false //是否关闭通知，false�
 
 function requireConfig() {
 	if ($.isNode()) return
-	cidsList.length = 0
-	typeList.length = 0
+	let qxCidsList = []
+	let qxTypeList = []
 	const cidsKeys = Object.keys(cidsMap)
 	const typeKeys = Object.keys(typeMap)
 	for (let key of cidsKeys) {
 		const open = $.getdata(key)
-		// console.log(`${key}, ${open}`)
-		if (open == 'true') cidsList.push(key)
+		if (open == 'true') qxCidsList.push(key)
 	}
 	for (let key of typeKeys) {
 		const open = $.getdata(key)
-		// console.log(`${key}, ${open}`)
-		if (open == 'true') typeList.push(key)
+		if (open == 'true') qxTypeList.push(key)
 	}
-	goodFilters = $.getdata('filter').split('&')
-	minPrice = Number($.getdata('min_price'))
-	$.pageSize = Number($.getdata('page_size'))
-	console.log({cidsList, typeList, goodFilters, minPrice, pageSize:$.pageSize, jdNotify})
+	if (qxCidsList.length != 0) cidsList = qxCidsList
+	if (qxTypeList.length != 0) typeList = qxTypeList
+	if ($.getdata('filter')) goodFilters = $.getdata('filter').split('&')
+	if ($.getdata('min_price')) minPrice = Number($.getdata('min_price'))
+	if ($.getdata('page_size')) $.pageSize = Number($.getdata('page_size'))
+	if($.pageSize == 0) $.pageSize = 12
+	console.log({ cidsList, typeList, goodFilters, minPrice, pageSize: $.pageSize, jdNotify })
 }
 
 function isLogin() {
