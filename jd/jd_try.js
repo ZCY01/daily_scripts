@@ -143,7 +143,7 @@ function isLogin() {
 					$.isLogin = data.isLogin
 				}
 			} catch (e) {
-				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve()
 			}
@@ -170,7 +170,7 @@ function getGoodListByCond(cids, page, pageSize, type, state) {
 					}
 				}
 			} catch (e) {
-				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve()
 			}
@@ -230,7 +230,7 @@ async function getApplyStateByActivityIds() {
 						for (let apply of data) ids.push(apply.activityId)
 					}
 				} catch (e) {
-					reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+					reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 				} finally {
 					$.goodList = $.goodList.filter(good => {
 						for (let id of ids) {
@@ -269,7 +269,7 @@ function canTry(good) {
 					good.shopId = eval(data.match(/"shopId":(\d+)/)[1])
 				}
 			} catch (e) {
-				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve(ret)
 			}
@@ -288,7 +288,7 @@ function isFollowed(good) {
 					resolve(data.success && data.data)
 				}
 			} catch (e) {
-				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve(false)
 			}
@@ -311,7 +311,7 @@ function followShop(good) {
 					resolve(data.success && data.data)
 				}
 			} catch (e) {
-				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve(false)
 			}
@@ -342,7 +342,6 @@ async function doTry(good) {
 				if (err) {
 					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
 				} else {
-
 					data = JSON.parse(data)
 					if (data.success) {
 						$.totalTry += 1
@@ -355,7 +354,7 @@ async function doTry(good) {
 					}
 				}
 			} catch (e) {
-				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve()
 			}
@@ -395,7 +394,7 @@ async function getSuccessList() {
 					}
 				}
 			} catch (e) {
-				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve()
 			}

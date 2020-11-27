@@ -129,7 +129,7 @@ function getHyperParams() {
 				let pinreg = data.match(`id="pin".*value="(.*?)"`)
 				if (pinreg) $.HyperParam.pin = pinreg[1]
 			} catch (e) {
-				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve();
 			}
@@ -193,7 +193,7 @@ function getApplyData(page) {
 					}
 				}
 			} catch (e) {
-				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve();
 			}
@@ -233,7 +233,7 @@ function skuApply(order) {
 					}
 				}
 			} catch (e) {
-				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve();
 			}
@@ -262,7 +262,7 @@ function HistoryResultQuery(order) {
 					overTime = data.indexOf('overTime') != -1
 				}
 			} catch (e) {
-				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				if(overTime){
 					$.orderList = $.orderList.filter(item => {
@@ -308,7 +308,7 @@ function getApplyResult() {
 					}
 				}
 			} catch (e) {
-				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve()
 			}
