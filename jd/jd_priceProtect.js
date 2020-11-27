@@ -10,7 +10,6 @@
 const $ = new Env('京东价格保护');
 //Node.js用户请在jdCookie.js处填写京东ck;
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
-const notify = $.isNode() ? require('./sendNotify') : '';
 
 const selfdomain = 'https://msitepp-fm.jd.com/';
 const unifiedGatewayName = 'https://api.m.jd.com/';
@@ -47,6 +46,10 @@ const jdDebug = $.getdata('jdPriceProtectDebug') || false
 			$.orderList = new Array()
 			$.applyMap = {}
 
+			// TODO
+			$.token = ''
+			$.feSt = 'f'
+
 			console.log(`💥 获得首页面，解析超参数`)
 			await getHyperParams()
 			console.log($.HyperParam)
@@ -81,8 +84,10 @@ const jdDebug = $.getdata('jdPriceProtectDebug') || false
 		}
 	}
 })()
-.catch((e) => {$.logErr(e), debug(e)})
-	.finally(() => $.done())
+.catch((e) => {
+	console.log(`❗️ ${$.name} 运行错误！\n${e}`)
+	if(jdDebug) $.msg($.name, ``, `${e}`)
+}).finally(() => $.done())
 
 const getValueById = function (text, id) {
 	const reg = new RegExp(`id="${id}".*value="(.*?)"`)
@@ -107,27 +112,24 @@ function getHyperParams() {
 		}
 		$.get(options, (err, resp, data) => {
 			try {
-				if (err) {
-					reject(`💩 超级参数获取失败！${JSON.stringify(err)}`)
-				} else if (data) {
-					$.HyperParam = {
-						sid_hid: getValueById(data, 'sid_hid'),
-						type_hid: getValueById(data, 'type_hid'),
-						isLoadLastPropriceRecord: getValueById(data, 'isLoadLastPropriceRecord'),
-						isLoadSkuPrice: getValueById(data, 'isLoadSkuPrice'),
-						RefundType_Orderid_Repeater_hid: getValueById(data, 'RefundType_Orderid_Repeater_hid'),
-						isAlertSuccessTip: getValueById(data, 'isAlertSuccessTip'),
-						forcebot: getValueById(data, 'forcebot'),
-						useColorApi: getValueById(data, 'useColorApi'),
-						pinType: getValueById(data, 'pinType'),
-						keyWords: getValueById(data, 'keyWords'),
-						pin: undefined
-					}
-					let pinreg = data.match(`id="pin".*value="(.*?)"`)
-					if (pinreg) $.HyperParam.pin = pinreg[1]
+				if (err) throw new Error(JSON.stringify(err))
+				$.HyperParam = {
+					sid_hid: getValueById(data, 'sid_hid'),
+					type_hid: getValueById(data, 'type_hid'),
+					isLoadLastPropriceRecord: getValueById(data, 'isLoadLastPropriceRecord'),
+					isLoadSkuPrice: getValueById(data, 'isLoadSkuPrice'),
+					RefundType_Orderid_Repeater_hid: getValueById(data, 'RefundType_Orderid_Repeater_hid'),
+					isAlertSuccessTip: getValueById(data, 'isAlertSuccessTip'),
+					forcebot: getValueById(data, 'forcebot'),
+					useColorApi: getValueById(data, 'useColorApi'),
+					pinType: getValueById(data, 'pinType'),
+					keyWords: getValueById(data, 'keyWords'),
+					pin: undefined
 				}
+				let pinreg = data.match(`id="pin".*value="(.*?)"`)
+				if (pinreg) $.HyperParam.pin = pinreg[1]
 			} catch (e) {
-				reject(`💩 超级惨解析失败：${e}`)
+				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve();
 			}
@@ -147,14 +149,14 @@ function getApplyData(page) {
 		paramObj.sid = $.HyperParam.sid_hid
 		paramObj.type = $.HyperParam.type_hid
 		paramObj.forcebot = $.HyperParam.forcebot
-		paramObj.token = '';
-		paramObj.feSt = 'f';
+		paramObj.token = $.token
+		paramObj.feSt = $.feSt
 
 		$.post(taskurl('siteppM_priceskusPull', paramObj), (err, resp, data) => {
 			try {
 				if (err) {
-					console.log(`🚫 获取价格保护列表: ${JSON.stringify(err)}`)
-				} else if (data) {
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+				} else {
 					let pageErrorVal = data.match(/id="pageError_\d+" name="pageError_\d+" value="(.*?)"/)[1]
 					if (pageErrorVal == 'noexception') {
 						let pageDatasSize = eval(data.match(/id="pageSize_\d+" name="pageSize_\d+" value="(.*?)"/)[1])
@@ -165,8 +167,7 @@ function getApplyData(page) {
 						for (let i = 0; i < orders.length; i++) {
 							let info = orders[i][1].split(',')
 							if (info.length != 4) {
-								reject(`🚫 价格保护 ${order[1]} err`)
-								continue
+								throw new Error(`价格保护 ${order[1]}.length != 4`)
 							}
 
 							const item = {
@@ -192,7 +193,7 @@ function getApplyData(page) {
 					}
 				}
 			} catch (e) {
-				reject(`💩列表解析失败：${e}`)
+				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve();
 			}
@@ -213,15 +214,15 @@ function skuApply(order) {
 		paramObj.refundtype = order.refundtype
 		paramObj.forcebot = $.HyperParam.forcebot
 		paramObj.pinType = $.HyperParam.pinType
-		paramObj.token = ''
-		paramObj.feSt = 'f'
+		paramObj.token = $.token
+		paramObj.feSt = $.feSt
 
 		console.log(`🚀 ${order.title} 正在价格保护...`)
 		$.post(taskurl('siteppM_proApply', paramObj), (err, resp, data) => {
 			try {
 				if (err) {
-					console.log(`🚫 ${order.title} 价格保护 API请求失败，${JSON.stringify(err)}`)
-				} else if (data) {
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+				} else {
 					data = JSON.parse(data)
 					if (data.flag) {
 						if (data.proSkuApplyId != null) {
@@ -232,7 +233,7 @@ function skuApply(order) {
 					}
 				}
 			} catch (e) {
-				reject(`💩 ${order.title} 价格保护出错 ${e}`)
+				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve();
 			}
@@ -252,21 +253,23 @@ function HistoryResultQuery(order) {
 		paramObj.forcebot = $.HyperParam.forcebot
 		paramObj.pinType = $.HyperParam.pinType
 
+		let overTime = true
 		$.post(taskurl('siteppM_skuProResultPin', paramObj), (err, resp, data) => {
 			try {
 				if (err) {
-					reject(`🚫 ${order.title} 历史查询失败，请检查网路重试`)
-				} else if (data) {
-					if (data.indexOf('overTime') != -1) {
-						$.orderList = $.orderList.filter(item => {
-							return item.orderId != order.orderId || item.skuId != order.skuId
-						})
-					}
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+				} else {
+					overTime = data.indexOf('overTime') != -1
 				}
 			} catch (e) {
-				reject(`💩 ${order.title} 历史查询失败：${e}`)
+				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
-				resolve();
+				if(overTime){
+					$.orderList = $.orderList.filter(item => {
+						return item.orderId != order.orderId || item.skuId != order.skuId
+					})
+				}
+				resolve()
 			}
 		})
 	})
@@ -295,7 +298,7 @@ function getApplyResult() {
 		$.post(taskurl('siteppM_moreApplyResult', paramObj), (err, resp, data) => {
 			try {
 				if (err) {
-					console.log(`🚫 ${$.name} 获得查结果 ${JSON.stringify(err)}`)
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
 				} else if (data) {
 					data = JSON.parse(data)
 					let resultArray = data.applyResults;
@@ -305,7 +308,7 @@ function getApplyResult() {
 					}
 				}
 			} catch (e) {
-				reject(`🚫 获得价格保护结果出错！`)
+				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve()
 			}
@@ -343,12 +346,6 @@ function showMsg() {
 			"open-url": "https://msitepp-fm.jd.com/rest/priceprophone/priceProPhoneMenu"
 		});
 	}
-}
-
-function debug(msg){
-	if(!jdDebug) return
-	$.msg($.name, ``, `${msg} 错误`)
-
 }
 
 // prettier-ignore

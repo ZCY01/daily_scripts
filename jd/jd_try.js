@@ -16,7 +16,6 @@
 const $ = new Env('京东试用')
 //Node.js用户请在jdCookie.js处填写京东ck;
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : ''
-const notify = $.isNode() ? require('./sendNotify') : ''
 
 const selfdomain = 'https://try.m.jd.com'
 $.pageSize = 12
@@ -49,7 +48,8 @@ const typeMap = {
 }
 
 //IOS等用户直接用NobyDa的jd cookie
-let cookiesArr = [], cookie = ''
+let cookiesArr = [],
+	cookie = ''
 if ($.isNode()) {
 	Object.keys(jdCookieNode).forEach((item) => {
 		cookiesArr.push(jdCookieNode[item])
@@ -61,7 +61,6 @@ if ($.isNode()) {
 }
 const jdNotify = $.getdata('jdTryNotify') || false //是否关闭通知，false打开通知推送，true关闭通知推送
 const jdDebug = $.getdata('jdTryDebug') || false
-
 !(async () => {
 	if (!cookiesArr[0]) {
 		$.msg(`${$.name}运行失败`, '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/', {
@@ -98,8 +97,10 @@ const jdDebug = $.getdata('jdTryDebug') || false
 		}
 	}
 })()
-.catch((e) => $.logErr(e))
-	.finally(() => $.done())
+.catch((e) => {
+	console.log(`❗️ ${$.name} 运行错误！\n${e}`)
+	if(jdDebug) $.msg($.name, ``, `${e}`)
+}).finally(() => $.done())
 
 function requireConfig() {
 	if ($.isNode()) return
@@ -120,19 +121,29 @@ function requireConfig() {
 	if ($.getdata('filter')) goodFilters = $.getdata('filter').split('&')
 	if ($.getdata('min_price')) minPrice = Number($.getdata('min_price'))
 	if ($.getdata('page_size')) $.pageSize = Number($.getdata('page_size'))
-	if($.pageSize == 0) $.pageSize = 12
-	console.log({ cidsList, typeList, goodFilters, minPrice, pageSize: $.pageSize, jdNotify })
+	if ($.pageSize == 0) $.pageSize = 12
+	console.log({
+		cidsList,
+		typeList,
+		goodFilters,
+		minPrice,
+		pageSize: $.pageSize,
+		jdNotify
+	})
 }
 
 function isLogin() {
-	return new Promise(resolve => {
+	return new Promise((resolve, reject) => {
 		$.get(taskurl(`${selfdomain}/isLogin`), (err, resp, data) => {
 			try {
-				if(err) throw new Error(JSON.stringify(err))
-				data = JSON.parse(data)
-				$.isLogin = data.isLogin
+				if (err) {
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+				} else {
+					data = JSON.parse(data)
+					$.isLogin = data.isLogin
+				}
 			} catch (e) {
-				$.log(`💩 ${arguments.callee.name.toString()}`, e, JSON.stringify(data))
+				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve()
 			}
@@ -142,21 +153,24 @@ function isLogin() {
 
 function getGoodListByCond(cids, page, pageSize, type, state) {
 
-	return new Promise(resolve => {
+	return new Promise((resolve, reject) => {
 		let option = taskurl(`${selfdomain}/activity/list?pb=1&cids=${cids}&page=${page}&pageSize=${pageSize}&type=${type}&state=${state}`)
 		delete option.headers['Cookie']
 		$.get(option, (err, resp, data) => {
 			try {
-				if(err) throw new Error(JSON.stringify(err))
-				data = JSON.parse(data)
-				if (data.success) {
-					$.totalPages = data.data.pages
-					$.goodList = $.goodList.concat(data.data.data)
+				if (err) {
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
 				} else {
-					console.log(`💩 获得 ${cids} ${page} 列表失败: ${data.message}`)
+					data = JSON.parse(data)
+					if (data.success) {
+						$.totalPages = data.data.pages
+						$.goodList = $.goodList.concat(data.data.data)
+					} else {
+						console.log(`💩 获得 ${cids} ${page} 列表失败: ${data.message}`)
+					}
 				}
 			} catch (e) {
-				$.log(`💩 ${arguments.callee.name.toString()} 获得 ${cids} ${page} 列表失败`, e, JSON.stringify(data))
+				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve()
 			}
@@ -173,7 +187,6 @@ async function getGoodList() {
 			console.log(`⏰ 获取 ${cidsKey} ${typeKey} 商品列表`)
 			$.totalPages = 1
 			for (let page = 1; page <= $.totalPages; page++) {
-				// console.log(`⏰ 获取 ${cidsKey} ${typeKey} 商品列表 page:${page} pageSize:${$.totalPages}`)
 				await getGoodListByCond(cidsMap[cidsKey], page, $.pageSize, typeMap[typeKey], '0')
 			}
 		}
@@ -189,11 +202,11 @@ async function filterGoodList() {
 		// 2. good 距离结束不到10min
 		// 3. good 的结束时间大于一天
 		// 4. good 的价格小于最小的限制
-		if(!good || good.endTime < now + 10 * 60 * 1000 || good.endTime > oneMoreDay || good.jdPrice < minPrice){
+		if (!good || good.endTime < now + 10 * 60 * 1000 || good.endTime > oneMoreDay || good.jdPrice < minPrice) {
 			return false
 		}
-		for(let item of goodFilters){
-			if(good.trialName.indexOf(item) != -1) return false
+		for (let item of goodFilters) {
+			if (good.trialName.indexOf(item) != -1) return false
 		}
 		return true
 
@@ -206,22 +219,19 @@ async function filterGoodList() {
 
 async function getApplyStateByActivityIds() {
 	function opt(ids) {
-		return new Promise(resolve => {
+		return new Promise((resolve, reject) => {
 			$.get(taskurl(`${selfdomain}/getApplyStateByActivityIds?activityIds=${ids.join(',')}`), (err, resp, data) => {
 				try {
-					if(err) throw new Error(JSON.stringify(err))
-					data = JSON.parse(data)
-					$.goodList = $.goodList.filter(good => {
-						for (let apply of data) {
-							if (apply.activityId == good.id) {
-								return false
-							}
-						}
-						return true
-					})
+					if (err) {
+						console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+					} else {
+						data = JSON.parse(data)
+						ids.length = 0
+						for (let apply of data) ids.push(apply.activityId)
+					}
 				} catch (e) {
-					$.log(`💩 ${arguments.callee.name.toString()}`, e, JSON.stringify(data))
-
+					reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
+				} finally {
 					$.goodList = $.goodList.filter(good => {
 						for (let id of ids) {
 							if (id == good.id) {
@@ -230,8 +240,6 @@ async function getApplyStateByActivityIds() {
 						}
 						return true
 					})
-
-				} finally {
 					resolve()
 				}
 			})
@@ -250,15 +258,18 @@ async function getApplyStateByActivityIds() {
 }
 
 function canTry(good) {
-	return new Promise(resolve => {
+	return new Promise((resolve, reject) => {
 		let ret = false
 		$.get(taskurl(`${selfdomain}/activity?id=${good.id}`), (err, resp, data) => {
 			try {
-				if(err) throw new Error(JSON.stringify(err))
-				ret = data.indexOf('trySku') != -1
-				good.shopId = eval(data.match(/"shopId":(\d+)/)[1])
+				if (err) {
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+				} else {
+					ret = data.indexOf('trySku') != -1
+					good.shopId = eval(data.match(/"shopId":(\d+)/)[1])
+				}
 			} catch (e) {
-				$.log(`💩 ${good.id} 获取商品信息失败`, e, JSON.stringify(data))
+				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve(ret)
 			}
@@ -267,14 +278,17 @@ function canTry(good) {
 }
 
 function isFollowed(good) {
-	return new Promise(resolve => {
+	return new Promise((resolve, reject) => {
 		$.get(taskurl(`${selfdomain}/isFollowed?id=${good.shopId}`, good.id), (err, resp, data) => {
 			try {
-				if(err) throw new Error(JSON.stringify(err))
-				data = JSON.parse(data)
-				resolve(data.success && data.data)
+				if (err) {
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+				} else {
+					data = JSON.parse(data)
+					resolve(data.success && data.data)
+				}
 			} catch (e) {
-				$.log(`💩 ${good.id} 检查关注失败`, e, JSON.stringify(data))
+				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve(false)
 			}
@@ -283,18 +297,21 @@ function isFollowed(good) {
 }
 
 function followShop(good) {
-	return new Promise(resolve => {
+	return new Promise((resolve, reject) => {
 		$.get(taskurl(`${selfdomain}/followShop?id=${good.shopId}`, good.id), (err, resp, data) => {
 			try {
-				if(err) throw new Error(JSON.stringify(err))
-				data = JSON.parse(data)
-				if(data.code == 'F0410'){
-					$.running = false
-					$.stopMsg = data.msg || "关注数超过上限了哦~先清理下关注列表吧"
+				if (err) {
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+				} else {
+					data = JSON.parse(data)
+					if (data.code == 'F0410') {
+						$.running = false
+						$.stopMsg = data.msg || "关注数超过上限了哦~先清理下关注列表吧"
+					}
+					resolve(data.success && data.data)
 				}
-				resolve(data.success && data.data)
 			} catch (e) {
-				$.log(`💩 ${good.id} 关注商店失败`, e, JSON.stringify(data))
+				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve(false)
 			}
@@ -319,22 +336,26 @@ async function tryGoodList() {
 }
 
 async function doTry(good) {
-	return new Promise(resolve => {
+	return new Promise((resolve, reject) => {
 		$.get(taskurl(`${selfdomain}/migrate/apply?activityId=${good.id}&source=1&_s=m`, good.id), (err, resp, data) => {
 			try {
-				if(err) throw new Error(JSON.stringify(err))
-				data = JSON.parse(data)
-				if (data.success) {
-					$.totalTry += 1
-					console.log(`🥳 ${good.id} 🛒${good.trialName.substr(0,15)}🛒 ${data.message}`)
-				} else if (data.code == '-131') { // 每日300个商品
-					$.stopMsg = data.message
-					$.running = false
+				if (err) {
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
 				} else {
-					console.log(`🤬 ${good.id} 🛒${good.trialName.substr(0,15)}🛒 ${JSON.stringify(data)}`)
+
+					data = JSON.parse(data)
+					if (data.success) {
+						$.totalTry += 1
+						console.log(`🥳 ${good.id} 🛒${good.trialName.substr(0,15)}🛒 ${data.message}`)
+					} else if (data.code == '-131') { // 每日300个商品
+						$.stopMsg = data.message
+						$.running = false
+					} else {
+						console.log(`🤬 ${good.id} 🛒${good.trialName.substr(0,15)}🛒 ${JSON.stringify(data)}`)
+					}
 				}
 			} catch (e) {
-				$.log(`💩 ${good.id} ${good.trialName.substr(0,15)} 试用失败`, e, JSON.stringify(data))
+				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve()
 			}
@@ -344,7 +365,7 @@ async function doTry(good) {
 
 async function getSuccessList() {
 	// 一页12个商品，不会吧不会吧，不会有人一次性中奖12个商品吧？！🤔
-	return new Promise(resolve => {
+	return new Promise((resolve, reject) => {
 		const option = {
 			url: `https://try.jd.com/my/tryList?selected=2&page=1&tryVersion=2&_s=m`,
 			headers: {
@@ -360,17 +381,21 @@ async function getSuccessList() {
 		}
 		$.get(option, (err, resp, data) => {
 			try {
-				if(err) throw new Error(JSON.stringify(err))
-				data = JSON.parse(data)
-				if (data.success) {
-					$.successList = data.data.data.filter(item => {
-						return item.text.text.indexOf('请尽快领取') != -1
-					})
+				if (err) {
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
 				} else {
-					console.log(`💩 获得成功列表失败: ${data.message}`)
+
+					data = JSON.parse(data)
+					if (data.success) {
+						$.successList = data.data.data.filter(item => {
+							return item.text.text.indexOf('请尽快领取') != -1
+						})
+					} else {
+						console.log(`💩 获得成功列表失败: ${data.message}`)
+					}
 				}
 			} catch (e) {
-				$.log(`💩 获得成功列表失败`, e, JSON.stringify(data))
+				reject(`${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
 				resolve()
 			}
