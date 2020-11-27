@@ -19,7 +19,8 @@ const jdCookieNode = $.isNode() ? require('./jdCookie.js') : ''
 
 const selfdomain = 'https://try.m.jd.com'
 $.pageSize = 12
-let cidsList = ["家用电器", "手机数码", "电脑办公", "家居家装"]
+// let cidsList = ["家用电器", "手机数码", "电脑办公", "家居家装"]
+let cidsList = ["生鲜美食"]
 let typeList = ["普通试用", "闪电试用"]
 let goodFilters = "教程&软件&英语&辅导&培训".split('&')
 let minPrice = 0
@@ -46,44 +47,44 @@ const typeMap = {
 	"闪电试用": "2",
 	"30天试用": "5",
 }
-
 //IOS等用户直接用NobyDa的jd cookie
 let cookiesArr = [],
 	cookie = ''
+const jdNotify = $.getdata('jdTryNotify') || false //是否关闭通知，false打开通知推送，true关闭通知推送
+const jdDebug = $.getdata('jdTryDebug') || false
 if ($.isNode()) {
 	Object.keys(jdCookieNode).forEach((item) => {
 		cookiesArr.push(jdCookieNode[item])
 	})
 	if (process.env.JD_DEBUG && process.env.JD_DEBUG === 'false') console.log = () => {};
 } else {
-	cookiesArr.push($.getdata('CookieJD'));
-	cookiesArr.push($.getdata('CookieJD2'));
+	cookiesArr.push(...[$.getdata('CookieJD'), $.getdata('CookieJD2')])
 }
-const jdNotify = $.getdata('jdTryNotify') || false //是否关闭通知，false打开通知推送，true关闭通知推送
-const jdDebug = $.getdata('jdTryDebug') || false
+
 !(async () => {
 	if (!cookiesArr[0]) {
-		$.msg(`${$.name}运行失败`, '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/', {
+		$.msg($.name, '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/', {
 			"open-url": "https://bean.m.jd.com/"
-		});
+		})
 		return
 	}
 	requireConfig()
 	for (let i = 0; i < cookiesArr.length; i++) {
 		if (cookiesArr[i]) {
-
-			cookie = cookiesArr[i];
+			cookie = cookiesArr[i]
 			$.UserName = decodeURIComponent(cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1])
-			$.index = i + 1;
-
-			await isLogin()
+			$.index = i + 1
+			$.isLogin = false
+			$.nickName = ''
+			await TotalBean();
 			if (!$.isLogin) {
-				$.msg('价格保护运行失败', '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/', {
+				$.msg($.name, `【提示】cookie已失效`, `京东账号${$.index} ${$.nickName || $.UserName}\n请重新登录获取\nhttps://bean.m.jd.com/`, {
 					"open-url": "https://bean.m.jd.com/"
 				})
-				$.setdata('', `CookieJD${i ? i + 1 : "" }`); //cookie失效，故清空cookie。
+				$.setdata('', `CookieJD${i ? i + 1 : ""}`); //cookie失效，故清空cookie。$.setdata('', `CookieJD${i ? i + 1 : "" }`);//cookie失效，故清空cookie。
 				continue
 			}
+			console.log(`\n***********开始【京东账号${$.index}】${$.nickName || $.UserName}********\n`);
 
 			$.totalTry = 0
 			$.goodList = []
@@ -129,25 +130,6 @@ function requireConfig() {
 		minPrice,
 		pageSize: $.pageSize,
 		jdNotify
-	})
-}
-
-function isLogin() {
-	return new Promise((resolve, reject) => {
-		$.get(taskurl(`${selfdomain}/isLogin`), (err, resp, data) => {
-			try {
-				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
-				} else {
-					data = JSON.parse(data)
-					$.isLogin = data.isLogin
-				}
-			} catch (e) {
-				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
-			} finally {
-				resolve()
-			}
-		})
 	})
 }
 
@@ -266,7 +248,10 @@ function canTry(good) {
 					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
 				} else {
 					ret = data.indexOf('trySku') != -1
-					good.shopId = eval(data.match(/"shopId":(\d+)/)[1])
+					let result = data.match(/"shopId":(\d+)/)
+					if(result){
+						good.shopId = eval(result[1])
+					}
 				}
 			} catch (e) {
 				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
@@ -327,7 +312,7 @@ async function tryGoodList() {
 		let good = $.goodList[i]
 		if (!await canTry(good)) continue
 		// 如果没有关注且关注失败
-		if (!await isFollowed(good) && !await followShop(good)) continue
+		if (good.shopId && !await isFollowed(good) && !await followShop(good)) continue
 		// 两个申请间隔不能太短，放在下面有利于确保 follwShop 完成
 		await $.wait(5000)
 		// 关注完毕，即将试用
@@ -403,7 +388,7 @@ async function getSuccessList() {
 }
 
 function showMsg() {
-	let message = `京东账号${$.index} ${$.UserName}\n🎉 本次申请：${$.totalTry}个商品🛒\n🎉 ${$.successList.length}个商品待领取🤩\n🎉 结束原因：${$.stopMsg}`
+	let message = `京东账号${$.index} ${$.nickName || $.UserName}\n🎉 本次申请：${$.totalTry}个商品🛒\n🎉 ${$.successList.length}个商品待领取🤩\n🎉 结束原因：${$.stopMsg}`
 	if (!jdNotify || jdNotify === 'false') {
 		$.msg($.name, ``, message, {
 			"open-url": 'https://try.m.jd.com/user'
@@ -427,6 +412,47 @@ function taskurl(url, goodId) {
 			'Referer': goodId ? `https://try.m.jd.com/activity/?id=${goodId}` : undefined
 		},
 	}
+}
+
+function TotalBean() {
+	return new Promise(async resolve => {
+		const options = {
+			"url": `https://wq.jd.com/user/info/QueryJDUserInfo?sceneval=2`,
+			"headers": {
+				"Accept": "application/json,text/plain, */*",
+				"Content-Type": "application/x-www-form-urlencoded",
+				"Accept-Encoding": "gzip, deflate, br",
+				"Accept-Language": "zh-cn",
+				"Connection": "keep-alive",
+				"Cookie": cookie,
+				"Referer": "https://wqs.jd.com/my/jingdou/my.shtml?sceneval=2",
+				"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
+			}
+		}
+		$.post(options, (err, resp, data) => {
+			try {
+				if (err) {
+					console.log(`${JSON.stringify(err)}`)
+					console.log(`${$.name} API请求失败，请检查网路重试`)
+				} else {
+					if (data) {
+						data = JSON.parse(data);
+						if (data['retcode'] === 13) {
+							return
+						}
+						$.isLogin = true
+						$.nickName = data['base'].nickname;
+					} else {
+						console.log(`京东服务器返回空数据`)
+					}
+				}
+			} catch (e) {
+				$.logErr(e, resp)
+			} finally {
+				resolve();
+			}
+		})
+	})
 }
 
 // prettier-ignore
