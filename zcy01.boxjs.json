@@ -32,7 +32,7 @@
 			},
 			{
 				"id": "min_price",
-				"name": "商品过滤器",
+				"name": "最低价格",
 				"val": 0,
 				"type": "number",
 				"desc": "商品最低价格（包含）"
@@ -45,151 +45,88 @@
 				"desc": "收集商品时每页的商品数量，越大收集越快"
 			},
 			{
-				"id": "split1",
-				"name": "商品类型⬇️",
+				"id": "jd_cids",
+				"name": "商品类型",
 				"val": "",
-				"type": "text",
-				"desc": "商品类型，选择后试用该类型商品"
+				"type": "checkboxes",
+				"desc": "",
+				"items": [{
+						"key": "家用电器",
+						"label": "家用电器"
+					},
+					{
+						"key": "手机数码",
+						"label": "手机数码"
+					},
+					{
+						"key": "电脑办公",
+						"label": "电脑办公"
+					},
+					{
+						"key": "家居家装",
+						"label": "家居家装"
+					},
+					{
+						"key": "美妆护肤",
+						"label": "美妆护肤"
+					},
+					{
+						"key": "服饰鞋包",
+						"label": "服饰鞋包"
+					},
+					{
+						"key": "母婴玩具",
+						"label": "母婴玩具"
+					},
+					{
+						"key": "生鲜美食",
+						"label": "生鲜美食"
+					},
+					{
+						"key": "图书音像",
+						"label": "图书音像"
+					},
+					{
+						"key": "钟表奢品",
+						"label": "钟表奢品"
+					},
+					{
+						"key": "个人护理",
+						"label": "个人护理"
+					},
+					{
+						"key": "家庭清洁",
+						"label": "家庭清洁"
+					},
+					{
+						"key": "食品饮料",
+						"label": "食品饮料"
+					},
+					{
+						"key": "更多惊喜",
+						"label": "更多惊喜"
+					}
+				]
 			},
 			{
-				"id": "全部商品",
-				"name": "全部商品",
-				"val": false,
-				"type": "boolean",
-				"desc": "开启后请取消其他商品类型"
-			},
-			{
-				"id": "家用电器",
-				"name": "家用电器",
-				"val": true,
-				"type": "boolean",
-				"desc": "试用 家用电器"
-			},
-			{
-				"id": "手机数码",
-				"name": "手机数码",
-				"val": true,
-				"type": "boolean",
-				"desc": "试用 手机数码"
-			},
-			{
-				"id": "电脑办公",
-				"name": "电脑办公",
-				"val": true,
-				"type": "boolean",
-				"desc": "试用 电脑办公"
-			},
-			{
-				"id": "家居家装",
-				"name": "家居家装",
-				"val": true,
-				"type": "boolean",
-				"desc": "试用 家居家装"
-			},
-			{
-				"id": "美妆护肤",
-				"name": "美妆护肤",
-				"val": false,
-				"type": "boolean",
-				"desc": "试用 美妆护肤"
-			},
-			{
-				"id": "服饰鞋包",
-				"name": "服饰鞋包",
-				"val": false,
-				"type": "boolean",
-				"desc": "试用 服饰鞋包"
-			},
-			{
-				"id": "母婴玩具",
-				"name": "母婴玩具",
-				"val": false,
-				"type": "boolean",
-				"desc": "试用 母婴玩具"
-			},
-			{
-				"id": "生鲜美食",
-				"name": "生鲜美食",
-				"val": false,
-				"type": "boolean",
-				"desc": "试用 生鲜美食"
-			},
-			{
-				"id": "图书音像",
-				"name": "图书音像",
-				"val": false,
-				"type": "boolean",
-				"desc": "试用 图书音像"
-			},
-			{
-				"id": "钟表奢品",
-				"name": "钟表奢品",
-				"val": false,
-				"type": "boolean",
-				"desc": "试用 钟表奢品"
-			},
-			{
-				"id": "个人护理",
-				"name": "个人护理",
-				"val": false,
-				"type": "boolean",
-				"desc": "试用 个人护理"
-			},
-			{
-				"id": "家庭清洁",
-				"name": "家庭清洁",
-				"val": false,
-				"type": "boolean",
-				"desc": "试用 家庭清洁"
-			},
-			{
-				"id": "食品饮料",
-				"name": "食品饮料",
-				"val": false,
-				"type": "boolean",
-				"desc": "试用 食品饮料"
-			},
-			{
-				"id": "更多惊喜",
-				"name": "更多惊喜",
-				"val": false,
-				"type": "boolean",
-				"desc": "试用 更多惊喜"
-			},
-			{
-				"id": "split2",
-				"name": "试用类型⬇️",
+				"id": "jd_type",
+				"name": "试用类型",
 				"val": "",
-				"type": "text",
-				"desc": "试用类型，选择后试用该类型"
-			},
-			{
-				"id": "全部试用",
-				"name": "全部试用",
-				"val": false,
-				"type": "boolean",
-				"desc": "开启后请取消其他试用类型"
-			},
-			{
-				"id": "普通试用",
-				"name": "普通试用",
-				"val": true,
-				"type": "boolean",
-				"desc": "试用类型： 普通试用"
-			},
-			{
-				"id": "闪电试用",
-				"name": "闪电试用",
-				"val": true,
-				"type": "boolean",
-				"desc": "试用类型： 闪电试用"
-			},
-			{
-				"id": "30天试用",
-				"name": "30天试用",
-				"val": false,
-				"type": "boolean",
-				"desc": "试用类型： 30天试用"
+				"type": "checkboxes",
+				"desc": "",
+				"items": [{
+						"key": "普通试用",
+						"label": "普通试用"
+					},
+					{
+						"key": "闪电试用",
+						"label": "闪电试用"
+					},
+					{
+						"key": "30天试用",
+						"label": "30天试用"
+					}
+				]
 			}
 		],
 		"icons": [
@@ -209,7 +146,7 @@
 			"val": false,
 			"type": "boolean",
 			"desc": "运行京东价格保护脚本时不发出系统弹窗通知"
-		},{
+		}, {
 			"id": "jdPriceProtectDebug",
 			"name": "开启调试",
 			"val": false,

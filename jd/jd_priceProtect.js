@@ -35,7 +35,6 @@ if ($.isNode()) {
 		})
 		return
 	}
-	requireConfig()
 	for (let i = 0; i < cookiesArr.length; i++) {
 		if (cookiesArr[i]) {
 			cookie = cookiesArr[i]
@@ -98,7 +97,7 @@ if ($.isNode()) {
 })()
 .catch((e) => {
 	console.log(`❗️ ${$.name} 运行错误！\n${e}`)
-	if(jdDebug) $.msg($.name, ``, `${e}`)
+	if(eval(jdDebug)) $.msg($.name, ``, `${e}`)
 }).finally(() => $.done())
 
 const getValueById = function (text, id) {
