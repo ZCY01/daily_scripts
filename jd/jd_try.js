@@ -140,7 +140,7 @@ function getGoodListByCond(cids, page, pageSize, type, state) {
 		$.get(option, (err, resp, data) => {
 			try {
 				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 				} else {
 					data = JSON.parse(data)
 					if (data.success) {
@@ -204,7 +204,7 @@ async function getApplyStateByActivityIds() {
 			$.get(taskurl(`${selfdomain}/getApplyStateByActivityIds?activityIds=${ids.join(',')}`), (err, resp, data) => {
 				try {
 					if (err) {
-						console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+						console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 					} else {
 						data = JSON.parse(data)
 						ids.length = 0
@@ -244,7 +244,7 @@ function canTry(good) {
 		$.get(taskurl(`${selfdomain}/activity?id=${good.id}`), (err, resp, data) => {
 			try {
 				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 				} else {
 					ret = data.indexOf('trySku') != -1
 					let result = data.match(/"shopId":(\d+)/)
@@ -266,7 +266,7 @@ function isFollowed(good) {
 		$.get(taskurl(`${selfdomain}/isFollowed?id=${good.shopId}`, good.id), (err, resp, data) => {
 			try {
 				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 				} else {
 					data = JSON.parse(data)
 					resolve(data.success && data.data)
@@ -285,7 +285,7 @@ function followShop(good) {
 		$.get(taskurl(`${selfdomain}/followShop?id=${good.shopId}`, good.id), (err, resp, data) => {
 			try {
 				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 				} else {
 					data = JSON.parse(data)
 					if (data.code == 'F0410') {
@@ -324,7 +324,7 @@ async function doTry(good) {
 		$.get(taskurl(`${selfdomain}/migrate/apply?activityId=${good.id}&source=1&_s=m`, good.id), (err, resp, data) => {
 			try {
 				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 				} else {
 					data = JSON.parse(data)
 					if (data.success) {
@@ -365,7 +365,7 @@ async function getSuccessList() {
 		$.get(option, (err, resp, data) => {
 			try {
 				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 				} else {
 
 					data = JSON.parse(data)

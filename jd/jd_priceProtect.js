@@ -70,7 +70,7 @@ if ($.isNode()) {
 				await getApplyData(page)
 			}
 
-			console.log(`💥 删除超时的订单`)
+			console.log(`💥 删除不符合订单`)
 			let taskList = []
 			for (let order of $.orderList) {
 				taskList.push(HistoryResultQuery(order))
@@ -166,7 +166,7 @@ function getApplyData(page) {
 		$.post(taskurl('siteppM_priceskusPull', paramObj), (err, resp, data) => {
 			try {
 				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 				} else {
 					let pageErrorVal = data.match(/id="pageError_\d+" name="pageError_\d+" value="(.*?)"/)[1]
 					if (pageErrorVal == 'noexception') {
@@ -232,7 +232,7 @@ function skuApply(order) {
 		$.post(taskurl('siteppM_proApply', paramObj), (err, resp, data) => {
 			try {
 				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 				} else {
 					data = JSON.parse(data)
 					if (data.flag) {
@@ -264,18 +264,20 @@ function HistoryResultQuery(order) {
 		paramObj.forcebot = $.HyperParam.forcebot
 		paramObj.pinType = $.HyperParam.pinType
 
-		let overTime = true
+		const reg = new RegExp("overTime|[^库]不支持价保|无法申请价保|请用原订单申请")
+		let deleted = true
 		$.post(taskurl('siteppM_skuProResultPin', paramObj), (err, resp, data) => {
 			try {
 				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 				} else {
-					overTime = data.indexOf('overTime') != -1
+					deleted = reg.test(data)
 				}
 			} catch (e) {
 				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
-				if(overTime){
+				if (deleted) {
+					console.log(`⏰ 删除商品：${order.title}`)
 					$.orderList = $.orderList.filter(item => {
 						return item.orderId != order.orderId || item.skuId != order.skuId
 					})
@@ -309,7 +311,7 @@ function getApplyResult() {
 		$.post(taskurl('siteppM_moreApplyResult', paramObj), (err, resp, data) => {
 			try {
 				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${err}`)
+					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 				} else if (data) {
 					data = JSON.parse(data)
 					let resultArray = data.applyResults;
