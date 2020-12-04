@@ -16,13 +16,15 @@
 const $ = new Env('京东试用')
 //Node.js用户请在jdCookie.js处填写京东ck;
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : ''
-
 const selfdomain = 'https://try.m.jd.com'
+
+// params for node
 $.pageSize = 12
 let cidsList = ["家用电器", "手机数码", "电脑办公", "家居家装"]
 let typeList = ["普通试用", "闪电试用"]
 let goodFilters = "教程&软件&英语&辅导&培训".split('&')
 let minPrice = 0
+
 const cidsMap = {
 	"全部商品": "0",
 	"家用电器": "737",
@@ -85,11 +87,13 @@ if ($.isNode()) {
 			}
 			console.log(`\n***********开始【京东账号${$.index}】${$.nickName || $.UserName}********\n`);
 
-			$.totalTry = 0
 			$.goodList = []
 			$.successList = []
 			await getGoodList()
 			await filterGoodList()
+
+			$.totalTry = 0
+			$.totalGoods = $.goodList.length
 			await tryGoodList()
 			await getSuccessList()
 
@@ -134,7 +138,7 @@ function requireConfig() {
 
 function getGoodListByCond(cids, page, pageSize, type, state) {
 
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		let option = taskurl(`${selfdomain}/activity/list?pb=1&cids=${cids}&page=${page}&pageSize=${pageSize}&type=${type}&state=${state}`)
 		delete option.headers['Cookie']
 		$.get(option, (err, resp, data) => {
@@ -200,7 +204,7 @@ async function filterGoodList() {
 
 async function getApplyStateByActivityIds() {
 	function opt(ids) {
-		return new Promise((resolve, reject) => {
+		return new Promise(async (resolve, reject) => {
 			$.get(taskurl(`${selfdomain}/getApplyStateByActivityIds?activityIds=${ids.join(',')}`), (err, resp, data) => {
 				try {
 					if (err) {
@@ -239,7 +243,7 @@ async function getApplyStateByActivityIds() {
 }
 
 function canTry(good) {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		let ret = false
 		$.get(taskurl(`${selfdomain}/activity?id=${good.id}`), (err, resp, data) => {
 			try {
@@ -262,7 +266,7 @@ function canTry(good) {
 }
 
 function isFollowed(good) {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		$.get(taskurl(`${selfdomain}/isFollowed?id=${good.shopId}`, good.id), (err, resp, data) => {
 			try {
 				if (err) {
@@ -281,7 +285,7 @@ function isFollowed(good) {
 }
 
 function followShop(good) {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		$.get(taskurl(`${selfdomain}/followShop?id=${good.shopId}`, good.id), (err, resp, data) => {
 			try {
 				if (err) {
@@ -320,7 +324,7 @@ async function tryGoodList() {
 }
 
 async function doTry(good) {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		$.get(taskurl(`${selfdomain}/migrate/apply?activityId=${good.id}&source=1&_s=m`, good.id), (err, resp, data) => {
 			try {
 				if (err) {
@@ -348,7 +352,7 @@ async function doTry(good) {
 
 async function getSuccessList() {
 	// 一页12个商品，不会吧不会吧，不会有人一次性中奖12个商品吧？！🤔
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		const option = {
 			url: `https://try.jd.com/my/tryList?selected=2&page=1&tryVersion=2&_s=m`,
 			headers: {
@@ -367,7 +371,6 @@ async function getSuccessList() {
 				if (err) {
 					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 				} else {
-
 					data = JSON.parse(data)
 					if (data.success) {
 						$.successList = data.data.data.filter(item => {
@@ -387,7 +390,7 @@ async function getSuccessList() {
 }
 
 function showMsg() {
-	let message = `京东账号${$.index} ${$.nickName || $.UserName}\n🎉 本次申请：${$.totalTry}个商品🛒\n🎉 ${$.successList.length}个商品待领取🤩\n🎉 结束原因：${$.stopMsg}`
+	let message = `京东账号${$.index} ${$.nickName || $.UserName}\n🎉 本次申请：${$.totalTry}/${$.totalGoods}个商品🛒\n🎉 ${$.successList.length}个商品待领取🤩\n🎉 结束原因：${$.stopMsg}`
 	if (!jdNotify || jdNotify === 'false') {
 		$.msg($.name, ``, message, {
 			"open-url": 'https://try.m.jd.com/user'
@@ -453,6 +456,7 @@ function TotalBean() {
 		})
 	})
 }
+
 
 // 来自 @chavyleung 大佬
 // https://raw.githubusercontent.com/chavyleung/scripts/master/Env.js
