@@ -1,324 +1,57 @@
 /*
-京东价格保护：脚本更新地址 https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_priceProtect.js
+限免APP：脚本更新地址 https://raw.githubusercontent.com/ZCY01/daily_scripts/main/app/free_app_detect.js
 脚本兼容: QuantumultX, Node.js
 
 ==========================Quantumultx=========================
 [task_local]
-# 京东价格保护
-5 0 * * * https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_priceProtect.js, tag=京东价格保护, img-url=https://raw.githubusercontent.com/ZCY01/img/master/pricev1.png, enabled=true
-*/
-const $ = new Env('京东价格保护');
-//Node.js用户请在jdCookie.js处填写京东ck;
-const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
 
-const selfdomain = 'https://msitepp-fm.jd.com/';
-const unifiedGatewayName = 'https://api.m.jd.com/';
-
-//IOS等用户直接用NobyDa的jd cookie
-let cookiesArr = [],
-	cookie = ''
-const jdNotify = $.getdata('jdPriceProtectNotify') || false //是否关闭通知，false打开通知推送，true关闭通知推送
-const jdDebug = $.getdata('jdPriceProtectDebug') || false
-
-if ($.isNode()) {
-	Object.keys(jdCookieNode).forEach((item) => {
-		cookiesArr.push(jdCookieNode[item])
-	})
-	if (process.env.JD_DEBUG && process.env.JD_DEBUG === 'false') console.log = () => {};
-} else {
-	cookiesArr.push(...[$.getdata('CookieJD'), $.getdata('CookieJD2')])
-}
+# 限免APP
+1 8-22 * * * https://raw.githubusercontent.com/ZCY01/daily_scripts/main/app/free_app_detect.js, tag=限免APP, enabled=true
+ */
+const $ = Env("限免APP")
+$.date = $.time('yyyyMMdd')
+$.last_updated_at = $.getdata('last_updated_at') || 0
+console.log(`${$.name} 上次运行时间:${$.time('yyyy-MM-dd HH:mm:ss', new Date($.last_updated_at*1000))}`)
 
 !(async () => {
-	if (!cookiesArr[0]) {
-		$.msg($.name, '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/', {
-			"open-url": "https://bean.m.jd.com/"
-		})
-		return
-	}
-	for (let i = 0; i < cookiesArr.length; i++) {
-		if (cookiesArr[i]) {
-			cookie = cookiesArr[i]
-			$.UserName = decodeURIComponent(cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1])
-			$.index = i + 1
-			$.isLogin = false
-			$.nickName = ''
-			await TotalBean();
-			if (!$.isLogin) {
-				$.msg($.name, `【提示】cookie已失效`, `京东账号${$.index} ${$.nickName || $.UserName}\n请重新登录获取\nhttps://bean.m.jd.com/`, {
-					"open-url": "https://bean.m.jd.com/"
-				})
-				$.setdata('', `CookieJD${i ? i + 1 : ""}`); //cookie失效，故清空cookie。$.setdata('', `CookieJD${i ? i + 1 : "" }`);//cookie失效，故清空cookie。
-				continue
-			}
-			console.log(`\n***********开始【京东账号${$.index}】${$.nickName || $.UserName}********\n`);
-
-			$.hasNext = true
-			$.refundtotalamount = 0
-			$.orderList = new Array()
-			$.applyMap = {}
-
-			// TODO
-			$.token = ''
-			$.feSt = 'f'
-
-			console.log(`💥 获得首页面，解析超参数`)
-			await getHyperParams()
-			console.log($.HyperParam)
-
-			console.log(`💥 获取所有价格保护列表，排除附件商品`)
-			for (let page = 1; $.hasNext; page++) {
-				await getApplyData(page)
-			}
-
-			console.log(`💥 删除不符合订单`)
-			let taskList = []
-			for (let order of $.orderList) {
-				taskList.push(HistoryResultQuery(order))
-			}
-			await Promise.all(taskList)
-
-			console.log(`💥 ${$.orderList.length}个商品即将申请价格保护！`)
-			for (let order of $.orderList) {
-				await skuApply(order)
-				await $.wait(200)
-			}
-
-			for (let i = 1; i <= 30 && Object.keys($.applyMap).length > 0; i++) {
-				console.log(`⏳ 获取申请价格保护结果，${30-i}s...`)
-				await $.wait(1000)
-				if (i % 5 == 0) {
-					await getApplyResult()
-				}
-			}
-
-			showMsg()
-		}
-	}
+	await gofans()
+	$.setdata(`${Date.now() / 1000}`, 'last_updated_at')
 })()
 .catch((e) => {
 	console.log(`❗️ ${$.name} 运行错误！\n${e}`)
-	if (eval(jdDebug)) $.msg($.name, ``, `${e}`)
 }).finally(() => $.done())
 
-const getValueById = function (text, id) {
-	const reg = new RegExp(`id="${id}".*value="(.*?)"`)
-	const res = text.match(reg)
-	return res[1]
-}
-
-function getHyperParams() {
+// https://gofans.cn/
+function gofans() {
 	return new Promise((resolve, reject) => {
-		const options = {
-			"url": 'https://msitepp-fm.jd.com/rest/priceprophone/priceProPhoneMenu',
-			"headers": {
-				'Host': 'msitepp-fm.jd.com',
-				'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-				'Connection': 'keep-alive',
-				'Cookie': cookie,
-				'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1',
-				'Accept-Language': 'zh-cn',
-				'Referer': 'https://ihelp.jd.com/',
-				'Accept-Encoding': 'gzip, deflate, br',
+		const option = {
+			'url': 'https://api.gofans.cn/v1/m/app_records?page=1&limit=20',
+			'headers': {
+				'Origin': `https://m.gofans.cn`,
+				'Accept': `application/json, text/plain, */*`,
+				'Connection': `keep-alive`,
+				'Referer': `https://m.gofans.cn/`,
+				'Accept-Encoding': `gzip, deflate, br`,
+				'Host': `api.gofans.cn`,
+				'User-Agent': `Mozilla/5.0 (iPhone; CPU iPhone OS 14_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.1 Mobile/15E148 Safari/604.1`,
+				'Accept-Language': `zh-cn`
 			},
 		}
-		$.get(options, (err, resp, data) => {
-			try {
-				if (err) throw new Error(JSON.stringify(err))
-				$.HyperParam = {
-					sid_hid: getValueById(data, 'sid_hid'),
-					type_hid: getValueById(data, 'type_hid'),
-					isLoadLastPropriceRecord: getValueById(data, 'isLoadLastPropriceRecord'),
-					isLoadSkuPrice: getValueById(data, 'isLoadSkuPrice'),
-					RefundType_Orderid_Repeater_hid: getValueById(data, 'RefundType_Orderid_Repeater_hid'),
-					isAlertSuccessTip: getValueById(data, 'isAlertSuccessTip'),
-					forcebot: getValueById(data, 'forcebot'),
-					useColorApi: getValueById(data, 'useColorApi'),
-					pinType: getValueById(data, 'pinType'),
-					keyWords: getValueById(data, 'keyWords'),
-					pin: undefined
-				}
-				let pinreg = data.match(`id="pin".*value="(.*?)"`)
-				if (pinreg) $.HyperParam.pin = pinreg[1]
-			} catch (e) {
-				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
-			} finally {
-				resolve();
-			}
-		})
-	})
-}
-
-function getApplyData(page) {
-	return new Promise((resolve, reject) => {
-
-		$.hasNext = false
-		const pageSize = 5
-		let paramObj = {};
-		paramObj.page = page
-		paramObj.pageSize = pageSize
-		paramObj.keyWords = $.HyperParam.keyWords
-		paramObj.sid = $.HyperParam.sid_hid
-		paramObj.type = $.HyperParam.type_hid
-		paramObj.forcebot = $.HyperParam.forcebot
-		paramObj.token = $.token
-		paramObj.feSt = $.feSt
-
-		$.post(taskurl('siteppM_priceskusPull', paramObj), (err, resp, data) => {
+		$.get(option, (err, resp, data) => {
 			try {
 				if (err) {
 					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 				} else {
-					let pageErrorVal = data.match(/id="pageError_\d+" name="pageError_\d+" value="(.*?)"/)[1]
-					if (pageErrorVal == 'noexception') {
-						let pageDatasSize = eval(data.match(/id="pageSize_\d+" name="pageSize_\d+" value="(.*?)"/)[1])
-						$.hasNext = pageDatasSize >= pageSize
-
-						let orders = [...data.matchAll(/skuApply\((.*?)\)/g)]
-						let titles = [...data.matchAll(/<p class="name">(.*?)<\/p>/g)]
-						for (let i = 0; i < orders.length; i++) {
-							let info = orders[i][1].split(',')
-							if (info.length != 4) {
-								throw new Error(`价格保护 ${order[1]}.length != 4`)
-							}
-
-							const item = {
-								orderId: eval(info[0]),
-								skuId: eval(info[1]),
-								sequence: eval(info[2]),
-								orderCategory: eval(info[3]),
-
-								title: `🛒${titles[i][1].substr(0,15)}🛒`,
-							}
-
-							let id = `skuprice_${item.orderId}_${item.skuId}_${item.sequence}`
-							let reg = new RegExp(`${id}.*?isfujian="(.*?)"`)
-							isfujian = data.match(reg)[1]
-
-							if (isfujian == "false") {
-								let skuRefundTypeDiv_orderId = `skuRefundTypeDiv_${item.orderId}`
-								item['refundtype'] = getValueById(data, skuRefundTypeDiv_orderId)
-								$.orderList.push(item)
-							}
-							//else...尊敬的顾客您好，您选择的商品本身为赠品，是不支持价保的呦，请您理解。
-						}
-					}
-				}
-			} catch (e) {
-				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
-			} finally {
-				resolve();
-			}
-		})
-	})
-}
-
-//  申请按钮
-// function skuApply(orderId, skuId, sequence, orderCategory, refundtype) {
-function skuApply(order) {
-	return new Promise((resolve, reject) => {
-		let paramObj = {};
-		paramObj.orderId = order.orderId;
-		paramObj.orderCategory = order.orderCategory;
-		paramObj.skuId = order.skuId;
-		paramObj.sid = $.HyperParam.sid_hid
-		paramObj.type = $.HyperParam.type_hid
-		paramObj.refundtype = order.refundtype
-		paramObj.forcebot = $.HyperParam.forcebot
-		paramObj.pinType = $.HyperParam.pinType
-		paramObj.token = $.token
-		paramObj.feSt = $.feSt
-
-		console.log(`🚀 ${order.title} 正在价格保护...`)
-		$.post(taskurl('siteppM_proApply', paramObj), (err, resp, data) => {
-			try {
-				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
-				} else {
-					data = JSON.parse(data)
-					if (data.flag) {
-						if (data.proSkuApplyId != null) {
-							$.applyMap[data.proSkuApplyId[0]] = order
-						}
-					} else {
-						console.log(`🚫 ${order.title} 申请失败：${data.errorMessage}`)
-					}
-				}
-			} catch (e) {
-				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
-			} finally {
-				resolve();
-			}
-		})
-	})
-}
-
-function HistoryResultQuery(order) {
-	return new Promise((resolve, reject) => {
-		let paramObj = {};
-		paramObj.orderId = order.orderId;
-		paramObj.skuId = order.skuId;
-		paramObj.sequence = order.sequence;
-		paramObj.sid = $.HyperParam.sid_hid
-		paramObj.type = $.HyperParam.type_hid
-		paramObj.pin = $.HyperParam.pin
-		paramObj.forcebot = $.HyperParam.forcebot
-		paramObj.pinType = $.HyperParam.pinType
-
-		const reg = new RegExp("overTime|[^库]不支持价保|无法申请价保|请用原订单申请")
-		let deleted = true
-		$.post(taskurl('siteppM_skuProResultPin', paramObj), (err, resp, data) => {
-			try {
-				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
-				} else {
-					deleted = reg.test(data)
-				}
-			} catch (e) {
-				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
-			} finally {
-				if (deleted) {
-					console.log(`⏰ 删除商品：${order.title}`)
-					$.orderList = $.orderList.filter(item => {
-						return item.orderId != order.orderId || item.skuId != order.skuId
+					data = JSON.parse(data).data
+					data = data.filter(item => {
+						return item.date == $.date && item.updated_at >= $.last_updated_at && item.price == 0
 					})
-				}
-				resolve()
-			}
-		})
-	})
-}
-
-function getApplyResult() {
-	function handleApplyResult(ajaxResultObj) {
-		if (ajaxResultObj.hasResult != "undefined" && ajaxResultObj.hasResult == true) { //有结果了
-			let proSkuApplyId = ajaxResultObj.applyResultVo.proSkuApplyId; //申请id
-			let order = $.applyMap[proSkuApplyId]
-			delete $.applyMap[proSkuApplyId]
-			if (ajaxResultObj.applyResultVo.proApplyStatus == 'ApplySuccess') { //价保成功
-				$.refundtotalamount += ajaxResultObj.applyResultVo.refundtotalamount
-			} else {
-				console.log(`💢 ${order.title} 申请失败：${ajaxResultObj.applyResultVo.failTypeStr} 失败类型:${ajaxResultObj.applyResultVo.failType}`)
-			}
-		}
-	}
-	return new Promise((resolve, reject) => {
-		let proSkuApplyIds = Object.keys($.applyMap).join(",");
-		let paramObj = {};
-		paramObj.proSkuApplyIds = proSkuApplyIds;
-		paramObj.pin = $.HyperParam.pin
-		paramObj.type = $.HyperParam.type_hid
-
-		$.post(taskurl('siteppM_moreApplyResult', paramObj), (err, resp, data) => {
-			try {
-				if (err) {
-					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
-				} else if (data) {
-					data = JSON.parse(data)
-					let resultArray = data.applyResults;
-					for (let i = 0; i < resultArray.length; i++) {
-						let ajaxResultObj = resultArray[i];
-						handleApplyResult(ajaxResultObj);
+					for (let item of data) {
+						let message = `🛒：${item.name}\n系统：${item.kind==1?'macOS':'iOS'}\n价格：${item.original_price}\n评分：⭐️${item.rating}分 ${item.rating_count}个评分\n描述：\n${item.description}\n`
+						$.msg($.name, '', message, {
+							"open-url": `https://gofans.cn/app/${item.uuid}`,
+							"media-url": item.icon
+						})
 					}
 				}
 			} catch (e) {
@@ -330,78 +63,6 @@ function getApplyResult() {
 	})
 }
 
-function taskurl(functionid, body) {
-	let urlStr = selfdomain + "rest/priceprophone/priceskusPull"
-	if ($.HyperParam.useColorApi == "true") {
-		urlStr = unifiedGatewayName + "api?appid=siteppM&functionId=" + functionid + "&forcebot=" + $.HyperParam.forcebot + "&t=" + new Date().getTime()
-	}
-	return {
-		"url": urlStr,
-		"headers": {
-			'Host': $.HyperParam.useColorApi == 'true' ? 'api.m.jd.com' : 'msitepp-fm.jd.com',
-			'Accept': '*/*',
-			'Accept-Language': 'zh-cn',
-			'Accept-Encoding': 'gzip, deflate, br',
-			'Content-Type': 'application/x-www-form-urlencoded',
-			'Origin': 'https://msitepp-fm.jd.com',
-			'Connection': 'keep-alive',
-			'Referer': 'https://msitepp-fm.jd.com/rest/priceprophone/priceProPhoneMenu',
-			"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1",
-			"Cookie": cookie
-		},
-		"body": body ? `body=${JSON.stringify(body)}` : undefined
-	}
-}
-
-function showMsg() {
-	console.log(`🎉 本次价格保护金额：${$.refundtotalamount}💰`)
-	if ($.refundtotalamount && !jdNotify) {
-		$.msg($.name, ``, `京东账号${$.index} ${$.nickName || $.UserName}\n🎉 本次价格保护金额：${$.refundtotalamount}💰`, {
-			"open-url": "https://msitepp-fm.jd.com/rest/priceprophone/priceProPhoneMenu"
-		});
-	}
-}
-
-function TotalBean() {
-	return new Promise(resolve => {
-		const options = {
-			"url": `https://wq.jd.com/user/info/QueryJDUserInfo?sceneval=2`,
-			"headers": {
-				"Accept": "application/json,text/plain, */*",
-				"Content-Type": "application/x-www-form-urlencoded",
-				"Accept-Encoding": "gzip, deflate, br",
-				"Accept-Language": "zh-cn",
-				"Connection": "keep-alive",
-				"Cookie": cookie,
-				"Referer": "https://wqs.jd.com/my/jingdou/my.shtml?sceneval=2",
-				"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
-			}
-		}
-		$.post(options, (err, resp, data) => {
-			try {
-				if (err) {
-					console.log(`${JSON.stringify(err)}`)
-					console.log(`${$.name} API请求失败，请检查网路重试`)
-				} else {
-					if (data) {
-						data = JSON.parse(data);
-						if (data['retcode'] === 13) {
-							return
-						}
-						$.isLogin = true
-						$.nickName = data['base'].nickname;
-					} else {
-						console.log(`京东服务器返回空数据`)
-					}
-				}
-			} catch (e) {
-				$.logErr(e, resp)
-			} finally {
-				resolve();
-			}
-		})
-	})
-}
 
 // 来自 @chavyleung 大佬
 // https://raw.githubusercontent.com/chavyleung/scripts/master/Env.js
@@ -845,17 +506,18 @@ function Env(name, opts) {
 		 * @param {*} fmt 格式化参数
 		 *
 		 */
-		time(fmt) {
+		time(fmt, now) {
+			if (!now) now = new Date()
 			let o = {
-				'M+': new Date().getMonth() + 1,
-				'd+': new Date().getDate(),
-				'H+': new Date().getHours(),
-				'm+': new Date().getMinutes(),
-				's+': new Date().getSeconds(),
-				'q+': Math.floor((new Date().getMonth() + 3) / 3),
-				'S': new Date().getMilliseconds()
+				'M+': now.getMonth() + 1,
+				'd+': now.getDate(),
+				'H+': now.getHours(),
+				'm+': now.getMinutes(),
+				's+': now.getSeconds(),
+				'q+': Math.floor((now.getMonth() + 3) / 3),
+				'S': now.getMilliseconds()
 			}
-			if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (new Date().getFullYear() + '').substr(4 - RegExp.$1.length))
+			if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (now.getFullYear() + '').substr(4 - RegExp.$1.length))
 			for (let k in o)
 				if (new RegExp('(' + k + ')').test(fmt))
 					fmt = fmt.replace(RegExp.$1, RegExp.$1.length == 1 ? o[k] : ('00' + o[k]).substr(('' + o[k]).length))

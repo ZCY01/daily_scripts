@@ -138,7 +138,7 @@ function requireConfig() {
 
 function getGoodListByCond(cids, page, pageSize, type, state) {
 
-	return new Promise(async (resolve, reject) => {
+	return new Promise((resolve, reject) => {
 		let option = taskurl(`${selfdomain}/activity/list?pb=1&cids=${cids}&page=${page}&pageSize=${pageSize}&type=${type}&state=${state}`)
 		delete option.headers['Cookie']
 		$.get(option, (err, resp, data) => {
@@ -204,7 +204,7 @@ async function filterGoodList() {
 
 async function getApplyStateByActivityIds() {
 	function opt(ids) {
-		return new Promise(async (resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			$.get(taskurl(`${selfdomain}/getApplyStateByActivityIds?activityIds=${ids.join(',')}`), (err, resp, data) => {
 				try {
 					if (err) {
@@ -243,7 +243,7 @@ async function getApplyStateByActivityIds() {
 }
 
 function canTry(good) {
-	return new Promise(async (resolve, reject) => {
+	return new Promise((resolve, reject) => {
 		let ret = false
 		$.get(taskurl(`${selfdomain}/activity?id=${good.id}`), (err, resp, data) => {
 			try {
@@ -266,7 +266,7 @@ function canTry(good) {
 }
 
 function isFollowed(good) {
-	return new Promise(async (resolve, reject) => {
+	return new Promise((resolve, reject) => {
 		$.get(taskurl(`${selfdomain}/isFollowed?id=${good.shopId}`, good.id), (err, resp, data) => {
 			try {
 				if (err) {
@@ -285,7 +285,7 @@ function isFollowed(good) {
 }
 
 function followShop(good) {
-	return new Promise(async (resolve, reject) => {
+	return new Promise((resolve, reject) => {
 		$.get(taskurl(`${selfdomain}/followShop?id=${good.shopId}`, good.id), (err, resp, data) => {
 			try {
 				if (err) {
@@ -324,7 +324,7 @@ async function tryGoodList() {
 }
 
 async function doTry(good) {
-	return new Promise(async (resolve, reject) => {
+	return new Promise((resolve, reject) => {
 		$.get(taskurl(`${selfdomain}/migrate/apply?activityId=${good.id}&source=1&_s=m`, good.id), (err, resp, data) => {
 			try {
 				if (err) {
@@ -352,7 +352,7 @@ async function doTry(good) {
 
 async function getSuccessList() {
 	// 一页12个商品，不会吧不会吧，不会有人一次性中奖12个商品吧？！🤔
-	return new Promise(async (resolve, reject) => {
+	return new Promise((resolve, reject) => {
 		const option = {
 			url: `https://try.jd.com/my/tryList?selected=2&page=1&tryVersion=2&_s=m`,
 			headers: {
@@ -417,7 +417,7 @@ function taskurl(url, goodId) {
 }
 
 function TotalBean() {
-	return new Promise(async resolve => {
+	return new Promise(resolve => {
 		const options = {
 			"url": `https://wq.jd.com/user/info/QueryJDUserInfo?sceneval=2`,
 			"headers": {
