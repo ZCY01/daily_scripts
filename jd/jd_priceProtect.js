@@ -1,4 +1,6 @@
 /*
+update 2021/1/8
+
 京东价格保护：脚本更新地址 https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_priceProtect.js
 脚本兼容: QuantumultX, Node.js
 
@@ -17,7 +19,7 @@ const unifiedGatewayName = 'https://api.m.jd.com/';
 //IOS等用户直接用NobyDa的jd cookie
 let cookiesArr = [],
 	cookie = ''
-const jdNotify = $.getdata('jdPriceProtectNotify') || false //是否关闭通知，false打开通知推送，true关闭通知推送
+const jdNotifyControl = $.getdata('jdPriceProtectNotify') || false //是否关闭通知，false打开通知推送，true关闭通知推送
 const jdDebug = $.getdata('jdPriceProtectDebug') || false
 
 if ($.isNode()) {
@@ -48,7 +50,6 @@ if ($.isNode()) {
 				$.msg($.name, `【提示】cookie已失效`, `京东账号${$.index} ${$.nickName || $.UserName}\n请重新登录获取\nhttps://bean.m.jd.com/`, {
 					"open-url": "https://bean.m.jd.com/"
 				})
-				$.setdata('', `CookieJD${i ? i + 1 : ""}`); //cookie失效，故清空cookie。$.setdata('', `CookieJD${i ? i + 1 : "" }`);//cookie失效，故清空cookie。
 				continue
 			}
 			console.log(`\n***********开始【京东账号${$.index}】${$.nickName || $.UserName}********\n`);
@@ -134,12 +135,7 @@ function getHyperParams() {
 					isAlertSuccessTip: getValueById(data, 'isAlertSuccessTip'),
 					forcebot: getValueById(data, 'forcebot'),
 					useColorApi: getValueById(data, 'useColorApi'),
-					pinType: getValueById(data, 'pinType'),
-					keyWords: getValueById(data, 'keyWords'),
-					pin: undefined
 				}
-				let pinreg = data.match(`id="pin".*value="(.*?)"`)
-				if (pinreg) $.HyperParam.pin = pinreg[1]
 			} catch (e) {
 				reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 			} finally {
@@ -157,7 +153,7 @@ function getApplyData(page) {
 		let paramObj = {};
 		paramObj.page = page
 		paramObj.pageSize = pageSize
-		paramObj.keyWords = $.HyperParam.keyWords
+		paramObj.keyWords = ""
 		paramObj.sid = $.HyperParam.sid_hid
 		paramObj.type = $.HyperParam.type_hid
 		paramObj.forcebot = $.HyperParam.forcebot
@@ -225,7 +221,6 @@ function skuApply(order) {
 		paramObj.type = $.HyperParam.type_hid
 		paramObj.refundtype = order.refundtype
 		paramObj.forcebot = $.HyperParam.forcebot
-		paramObj.pinType = $.HyperParam.pinType
 		paramObj.token = $.token
 		paramObj.feSt = $.feSt
 
@@ -261,9 +256,8 @@ function HistoryResultQuery(order) {
 		paramObj.sequence = order.sequence;
 		paramObj.sid = $.HyperParam.sid_hid
 		paramObj.type = $.HyperParam.type_hid
-		paramObj.pin = $.HyperParam.pin
+		paramObj.pin = undefined
 		paramObj.forcebot = $.HyperParam.forcebot
-		paramObj.pinType = $.HyperParam.pinType
 
 		const reg = new RegExp("overTime|[^库]不支持价保|无法申请价保|请用原订单申请")
 		let deleted = true
@@ -355,7 +349,7 @@ function taskurl(functionid, body) {
 
 function showMsg() {
 	console.log(`🎉 本次价格保护金额：${$.refundtotalamount}💰`)
-	if ($.refundtotalamount && !jdNotify) {
+	if ($.refundtotalamount && !eval(jdNotifyControl)) {
 		$.msg($.name, ``, `京东账号${$.index} ${$.nickName || $.UserName}\n🎉 本次价格保护金额：${$.refundtotalamount}💰`, {
 			"open-url": "https://msitepp-fm.jd.com/rest/priceprophone/priceProPhoneMenu"
 		});
