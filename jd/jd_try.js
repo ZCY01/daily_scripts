@@ -59,7 +59,13 @@ if ($.isNode()) {
 	})
 	if (process.env.JD_DEBUG && process.env.JD_DEBUG === 'false') console.log = () => {};
 } else {
-	cookiesArr.push(...[$.getdata('CookieJD'), $.getdata('CookieJD2')])
+	let cookiesData = $.getdata('CookiesJD') || "[]";
+	cookiesData = jsonParse(cookiesData);
+	cookiesArr = cookiesData.map(item => item.cookie);
+	cookiesArr.reverse();
+	cookiesArr.push(...[$.getdata('CookieJD2'), $.getdata('CookieJD')]);
+	cookiesArr.reverse();
+	cookiesArr = cookiesArr.filter(item => item !== "" && item !== null && item !== undefined);
 }
 
 !(async () => {
@@ -82,7 +88,6 @@ if ($.isNode()) {
 				$.msg($.name, `【提示】cookie已失效`, `京东账号${$.index} ${$.nickName || $.UserName}\n请重新登录获取\nhttps://bean.m.jd.com/`, {
 					"open-url": "https://bean.m.jd.com/"
 				})
-				$.setdata('', `CookieJD${i ? i + 1 : ""}`); //cookie失效，故清空cookie。$.setdata('', `CookieJD${i ? i + 1 : "" }`);//cookie失效，故清空cookie。
 				continue
 			}
 			console.log(`\n***********开始【京东账号${$.index}】${$.nickName || $.UserName}********\n`);

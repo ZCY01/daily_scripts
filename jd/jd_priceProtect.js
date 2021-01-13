@@ -28,7 +28,13 @@ if ($.isNode()) {
 	})
 	if (process.env.JD_DEBUG && process.env.JD_DEBUG === 'false') console.log = () => {};
 } else {
-	cookiesArr.push(...[$.getdata('CookieJD'), $.getdata('CookieJD2')])
+	let cookiesData = $.getdata('CookiesJD') || "[]"
+	cookiesData = jsonParse(cookiesData)
+	cookiesArr = cookiesData.map(item => item.cookie)
+	cookiesArr.reverse()
+	cookiesArr.push(...[$.getdata('CookieJD2'), $.getdata('CookieJD')])
+	cookiesArr.reverse()
+	cookiesArr = cookiesArr.filter(item => item !== "" && item !== null && item !== undefined)
 }
 
 !(async () => {
@@ -103,9 +109,13 @@ if ($.isNode()) {
 }).finally(() => $.done())
 
 const getValueById = function (text, id) {
-	const reg = new RegExp(`id="${id}".*value="(.*?)"`)
-	const res = text.match(reg)
-	return res[1]
+	try {
+		const reg = new RegExp(`id="${id}".*value="(.*?)"`)
+		const res = text.match(reg)
+		return res[1]
+	} catch (e) {
+		throw new Error(`getValueById:${id} err`)
+	}
 }
 
 function getHyperParams() {
