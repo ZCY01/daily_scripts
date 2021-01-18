@@ -20,6 +20,7 @@ let cookiesArr = [],
 	jdDebug = false,
 	notify
 const selfdomain = 'https://try.m.jd.com'
+const allGoodList = []
 
 // default params
 $.pageSize = 12
@@ -82,7 +83,9 @@ const typeMap = {
 
 			$.goodList = []
 			$.successList = []
-			await getGoodList()
+			if(allGoodList.length == 0){
+				await getGoodList()
+			}
 			await filterGoodList()
 
 			$.totalTry = 0
@@ -181,7 +184,7 @@ function getGoodListByCond(cids, page, pageSize, type, state) {
 					data = JSON.parse(data)
 					if (data.success) {
 						$.totalPages = data.data.pages
-						$.goodList = $.goodList.concat(data.data.data)
+						allGoodList = allGoodList.concat(data.data.data)
 					} else {
 						console.log(`💩 获得 ${cids} ${page} 列表失败: ${data.message}`)
 					}
@@ -211,10 +214,10 @@ async function getGoodList() {
 }
 
 async function filterGoodList() {
-	console.log(`⏰ 过滤商品列表，当前共有${$.goodList.length}个商品`)
+	console.log(`⏰ 过滤商品列表，当前共有${allGoodList.length}个商品`)
 	const now = Date.now()
 	const oneMoreDay = now + 24 * 60 * 60 * 1000
-	$.goodList = $.goodList.filter(good => {
+	$.goodList = allGoodList.filter(good => {
 		// 1. good 有问题
 		// 2. good 距离结束不到10min
 		// 3. good 的结束时间大于一天
