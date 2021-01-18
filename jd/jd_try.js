@@ -126,10 +126,14 @@ function requireConfig() {
 
 		if ($.isNode()) {
 			if (process.env.JD_TRY_CIDS_KEYS) {
-				cidsList = process.env.JD_TRY_CIDS_KEYS.split('@')
+				cidsList = process.env.JD_TRY_CIDS_KEYS.split('@').filter(key=>{
+					return Object.keys(cidsMap).includes(key)
+				})
 			}
 			if (process.env.JD_TRY_TYPE_KEYS) {
-				typeList = process.env.JD_TRY_CIDS_KEYS.split('@')
+				typeList = process.env.JD_TRY_CIDS_KEYS.split('@').filter(key=>{
+					return Object.keys(typeMap).includes(key)
+				})
 			}
 			if(process.env.JD_TRY_GOOD_FILTERS){
 				goodFilters = process.env.JD_TRY_GOOD_FILTERS.split('@')
