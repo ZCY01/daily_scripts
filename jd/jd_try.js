@@ -20,7 +20,7 @@ let cookiesArr = [],
 	jdDebug = false,
 	notify
 const selfdomain = 'https://try.m.jd.com'
-const allGoodList = []
+let allGoodList = []
 
 // default params
 $.pageSize = 12
