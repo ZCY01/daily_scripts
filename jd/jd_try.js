@@ -60,7 +60,6 @@ const typeMap = {
 		})
 		return
 	}
-	requireConfig()
 	for (let i = 0; i < cookiesArr.length; i++) {
 		if (cookiesArr[i]) {
 			cookie = cookiesArr[i];
