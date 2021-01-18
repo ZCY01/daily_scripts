@@ -407,7 +407,7 @@ async function getSuccessList() {
 					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
 				} else {
 					data = JSON.parse(data)
-					if (data.success) {
+					if (data.success && data.data) {
 						$.successList = data.data.data.filter(item => {
 							return item.text.text.indexOf('请尽快领取') != -1
 						})
