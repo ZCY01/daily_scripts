@@ -1,0 +1,40 @@
+name: JD_Try
+
+on:
+  # repository_dispatch:
+  workflow_dispatch:
+  release:
+    types: published
+  # push:
+  #   branches:
+  #     - master
+  schedule:
+    - cron: 0 1 * * * 
+  watch:
+    types: started
+    
+env:
+  JD_COOKIE: ${{ secrets.JD_COOKIE }}
+  PUSH_KEY: ${{ secrets.PUSH_KEY }}
+  UPLOAD_BESULT_DIR: true
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout codes
+              uses: actions/checkout@v2
+              
+            - name: Use Node.js
+              uses: actions/setup-node@v1
+              with:
+                node-version: '12.x'
+                
+            - name: Run install
+              run: npm install
+              
+            - name: Run Script
+              run: node jd/jd_try.js
+                
+
