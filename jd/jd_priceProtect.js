@@ -367,7 +367,7 @@ function showMsg() {
 }
 
 function TotalBean() {
-	return new Promise(resolve => {
+	return new Promise(async resolve => {
 		const options = {
 			"url": `https://wq.jd.com/user/info/QueryJDUserInfo?sceneval=2`,
 			"headers": {
@@ -378,8 +378,9 @@ function TotalBean() {
 				"Connection": "keep-alive",
 				"Cookie": cookie,
 				"Referer": "https://wqs.jd.com/my/jingdou/my.shtml?sceneval=2",
-				"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
-			}
+				"User-Agent": $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.4.4;14.3;network/4g;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1")
+			},
+			"timeout": 10000,
 		}
 		$.post(options, (err, resp, data) => {
 			try {
@@ -390,10 +391,14 @@ function TotalBean() {
 					if (data) {
 						data = JSON.parse(data);
 						if (data['retcode'] === 13) {
+							$.isLogin = false; //cookie过期
 							return
 						}
-						$.isLogin = true
-						$.nickName = data['base'].nickname;
+						if (data['retcode'] === 0) {
+							$.nickName = (data['base'] && data['base'].nickname) || $.UserName;
+						} else {
+							$.nickName = $.UserName
+						}
 					} else {
 						console.log(`京东服务器返回空数据`)
 					}

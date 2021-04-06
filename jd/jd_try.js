@@ -1,5 +1,5 @@
 /*
-京东价格保护：脚本更新地址 https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_try.js
+京东试用：脚本更新地址 https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_try.js
 脚本兼容: QuantumultX, Node.js
 
 ⚠️ 非常耗时的脚本。最多可能执行半小时！
@@ -10,7 +10,7 @@
 # 取关京东店铺商品，请在 boxjs 修改取消关注店铺数量
 5 10 * * * https://raw.githubusercontent.com/lxk0301/jd_scripts/master/jd_unsubscribe.js, tag=取关京东店铺商品, enabled=true
 
-# 京东价格保护
+# 京东试用
 30 10 * * * https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_try.js, tag=京东试用, img-url=https://raw.githubusercontent.com/ZCY01/img/master/jdtryv1.png, enabled=true
  */
 const $ = new Env('京东试用')
@@ -47,60 +47,60 @@ const cidsMap = {
 	"更多惊喜": "4938,13314,6994,9192,12473,6196,5272,12379,13678,15083,15126,15980",
 }
 const typeMap = {
-	"全部试用": "0",
-	"普通试用": "1",
-	"闪电试用": "2",
-	"30天试用": "5",
-}
-
-!(async () => {
-	await requireConfig()
-	if (!cookiesArr[0]) {
-		$.msg($.name, '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/', {
-			"open-url": "https://bean.m.jd.com/"
-		})
-		return
+		"全部试用": "0",
+		"普通试用": "1",
+		"闪电试用": "2",
+		"30天试用": "5",
 	}
-	for (let i = 0; i < cookiesArr.length; i++) {
-		if (cookiesArr[i]) {
-			cookie = cookiesArr[i];
-			$.UserName = decodeURIComponent(cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1])
-			$.index = i + 1;
-			$.isLogin = true;
-			$.nickName = '';
-			await TotalBean();
-			console.log(`\n开始【京东账号${$.index}】${$.nickName || $.UserName}\n`);
-			if (!$.isLogin) {
-				$.msg($.name, `【提示】cookie已失效`, `京东账号${$.index} ${$.nickName || $.UserName}\n请重新登录获取\nhttps://bean.m.jd.com/bean/signIndex.action`, {
-					"open-url": "https://bean.m.jd.com/bean/signIndex.action"
-				});
 
-				if ($.isNode()) {
-					await notify.sendNotify(`${$.name}cookie已失效 - ${$.UserName}`, `京东账号${$.index} ${$.UserName}\n请重新登录获取cookie`);
-				}
-				continue
-			}
-
-			$.goodList = []
-			$.successList = []
-			if(allGoodList.length == 0){
-				await getGoodList()
-			}
-			await filterGoodList()
-
-			$.totalTry = 0
-			$.totalGoods = $.goodList.length
-			await tryGoodList()
-			await getSuccessList()
-
-			await showMsg()
+	!(async () => {
+		await requireConfig()
+		if (!cookiesArr[0]) {
+			$.msg($.name, '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/', {
+				"open-url": "https://bean.m.jd.com/"
+			})
+			return
 		}
-	}
-})()
-.catch((e) => {
-	console.log(`❗️ ${$.name} 运行错误！\n${e}`)
-	if (eval(jdDebug)) $.msg($.name, ``, `${e}`)
-}).finally(() => $.done())
+		for (let i = 0; i < cookiesArr.length; i++) {
+			if (cookiesArr[i]) {
+				cookie = cookiesArr[i];
+				$.UserName = decodeURIComponent(cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1])
+				$.index = i + 1;
+				$.isLogin = true;
+				$.nickName = '';
+				await TotalBean();
+				console.log(`\n开始【京东账号${$.index}】${$.nickName || $.UserName}\n`);
+				if (!$.isLogin) {
+					$.msg($.name, `【提示】cookie已失效`, `京东账号${$.index} ${$.nickName || $.UserName}\n请重新登录获取\nhttps://bean.m.jd.com/bean/signIndex.action`, {
+						"open-url": "https://bean.m.jd.com/bean/signIndex.action"
+					});
+
+					if ($.isNode()) {
+						await notify.sendNotify(`${$.name}cookie已失效 - ${$.UserName}`, `京东账号${$.index} ${$.UserName}\n请重新登录获取cookie`);
+					}
+					continue
+				}
+
+				$.goodList = []
+				$.successList = []
+				if (allGoodList.length == 0) {
+					await getGoodList()
+				}
+				await filterGoodList()
+
+				$.totalTry = 0
+				$.totalGoods = $.goodList.length
+				await tryGoodList()
+				await getSuccessList()
+
+				await showMsg()
+			}
+		}
+	})()
+	.catch((e) => {
+		console.log(`❗️ ${$.name} 运行错误！\n${e}`)
+		if (eval(jdDebug)) $.msg($.name, ``, `${e}`)
+	}).finally(() => $.done())
 
 function requireConfig() {
 	return new Promise(resolve => {
@@ -129,16 +129,16 @@ function requireConfig() {
 
 		if ($.isNode()) {
 			if (process.env.JD_TRY_CIDS_KEYS) {
-				cidsList = process.env.JD_TRY_CIDS_KEYS.split('@').filter(key=>{
+				cidsList = process.env.JD_TRY_CIDS_KEYS.split('@').filter(key => {
 					return Object.keys(cidsMap).includes(key)
 				})
 			}
 			if (process.env.JD_TRY_TYPE_KEYS) {
-				typeList = process.env.JD_TRY_CIDS_KEYS.split('@').filter(key=>{
+				typeList = process.env.JD_TRY_CIDS_KEYS.split('@').filter(key => {
 					return Object.keys(typeMap).includes(key)
 				})
 			}
-			if(process.env.JD_TRY_GOOD_FILTERS){
+			if (process.env.JD_TRY_GOOD_FILTERS) {
 				goodFilters = process.env.JD_TRY_GOOD_FILTERS.split('@')
 			}
 			if (process.env.JD_TRY_MIN_PRICE) {
@@ -430,7 +430,7 @@ async function showMsg() {
 		$.msg($.name, ``, message, {
 			"open-url": 'https://try.m.jd.com/user'
 		})
-		if($.isNode()){
+		if ($.isNode()) {
 			await notify.sendNotify(`${$.name} - 账号${$.index} - ${$.nickName}`, message)
 		}
 	} else {
@@ -466,7 +466,7 @@ function TotalBean() {
 				"Connection": "keep-alive",
 				"Cookie": cookie,
 				"Referer": "https://wqs.jd.com/my/jingdou/my.shtml?sceneval=2",
-				"User-Agent": $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.2.2;14.2;%E4%BA%AC%E4%B8%9C/9.2.2 CFNetwork/1206 Darwin/20.1.0")
+				"User-Agent": $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.4.4;14.3;network/4g;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1")
 			},
 			"timeout": 10000,
 		}
@@ -482,7 +482,11 @@ function TotalBean() {
 							$.isLogin = false; //cookie过期
 							return
 						}
-						$.nickName = data['base'].nickname;
+						if (data['retcode'] === 0) {
+							$.nickName = (data['base'] && data['base'].nickname) || $.UserName;
+						} else {
+							$.nickName = $.UserName
+						}
 					} else {
 						console.log(`京东服务器返回空数据`)
 					}
