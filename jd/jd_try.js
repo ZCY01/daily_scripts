@@ -1,4 +1,5 @@
 /*
+update 2021/4/11
 京东试用：脚本更新地址 https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_try.js
 脚本兼容: QuantumultX, Node.js
 
@@ -14,15 +15,12 @@
 30 10 * * * https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_try.js, tag=京东试用, img-url=https://raw.githubusercontent.com/ZCY01/img/master/jdtryv1.png, enabled=true
  */
 const $ = new Env('京东试用')
-let cookiesArr = [],
-	cookie = '',
-	jdNotify = false,
-	jdDebug = false,
-	notify
-const selfdomain = 'https://try.m.jd.com'
+
+const selfDomain = 'https://try.m.jd.com'
 let allGoodList = []
 
 // default params
+let jdNotify = false
 $.pageSize = 12
 let cidsList = ["家用电器", "手机数码", "电脑办公", "家居家装"]
 let typeList = ["普通试用", "闪电试用"]
@@ -55,29 +53,26 @@ const typeMap = {
 
 	!(async () => {
 		await requireConfig()
-		if (!cookiesArr[0]) {
+		if (!$.cookiesArr[0]) {
 			$.msg($.name, '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/', {
 				"open-url": "https://bean.m.jd.com/"
 			})
 			return
 		}
-		for (let i = 0; i < cookiesArr.length; i++) {
-			if (cookiesArr[i]) {
-				cookie = cookiesArr[i];
-				$.UserName = decodeURIComponent(cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1])
+		for (let i = 0; i < $.cookiesArr.length; i++) {
+			if ($.cookiesArr[i]) {
+				$.cookie = $.cookiesArr[i];
+				$.UserName = decodeURIComponent($.cookie.match(/pt_pin=(.+?);/) && $.cookie.match(/pt_pin=(.+?);/)[1])
 				$.index = i + 1;
 				$.isLogin = true;
 				$.nickName = '';
-				await TotalBean();
+				await totalBean();
 				console.log(`\n开始【京东账号${$.index}】${$.nickName || $.UserName}\n`);
 				if (!$.isLogin) {
 					$.msg($.name, `【提示】cookie已失效`, `京东账号${$.index} ${$.nickName || $.UserName}\n请重新登录获取\nhttps://bean.m.jd.com/bean/signIndex.action`, {
 						"open-url": "https://bean.m.jd.com/bean/signIndex.action"
 					});
-
-					if ($.isNode()) {
-						await notify.sendNotify(`${$.name}cookie已失效 - ${$.UserName}`, `京东账号${$.index} ${$.UserName}\n请重新登录获取cookie`);
-					}
+					await $.notify.sendNotify(`${$.name}cookie已失效 - ${$.UserName}`, `京东账号${$.index} ${$.UserName}\n请重新登录获取cookie`);
 					continue
 				}
 
@@ -99,33 +94,29 @@ const typeMap = {
 	})()
 	.catch((e) => {
 		console.log(`❗️ ${$.name} 运行错误！\n${e}`)
-		if (eval(jdDebug)) $.msg($.name, ``, `${e}`)
 	}).finally(() => $.done())
 
 function requireConfig() {
 	return new Promise(resolve => {
 		console.log('开始获取配置文件\n')
-		notify = $.isNode() ? require('./sendNotify') : '';
-		//Node.js用户请在jdCookie.js处填写京东ck;
+		$.notify = $.isNode() ? require('./sendNotify') : async () => {}
+
+		//获取 Cookies
+		$.cookiesArr = []
 		if ($.isNode()) {
-			const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
+			//Node.js用户请在jdCookie.js处填写京东ck;
+			const jdCookieNode = require('./jdCookie.js');
 			Object.keys(jdCookieNode).forEach((item) => {
 				if (jdCookieNode[item]) {
-					cookiesArr.push(jdCookieNode[item])
+					$.cookiesArr.push(jdCookieNode[item])
 				}
 			})
 			if (process.env.JD_DEBUG && process.env.JD_DEBUG === 'false') console.log = () => {};
 		} else {
-			//IOS等用户直接用NobyDa的jd cookie
-			let cookiesData = $.getdata('CookiesJD') || "[]";
-			cookiesData = jsonParse(cookiesData);
-			cookiesArr = cookiesData.map(item => item.cookie);
-			cookiesArr.reverse();
-			cookiesArr.push(...[$.getdata('CookieJD2'), $.getdata('CookieJD')]);
-			cookiesArr.reverse();
-			cookiesArr = cookiesArr.filter(item => item !== "" && item !== null && item !== undefined);
+			//IOS等用户直接用NobyDa的jd $.cookie
+			$.cookiesArr = [$.getdata('CookieJD'), $.getdata('CookieJD2'), ...jsonParse($.getdata('CookiesJD') || "[]").map(item => item.$.cookie)].filter(item => !!item);
 		}
-		console.log(`共${cookiesArr.length}个京东账号\n`)
+		console.log(`共${$.cookiesArr.length}个京东账号\n`)
 
 		if ($.isNode()) {
 			if (process.env.JD_TRY_CIDS_KEYS) {
@@ -174,7 +165,7 @@ function requireConfig() {
 function getGoodListByCond(cids, page, pageSize, type, state) {
 
 	return new Promise((resolve, reject) => {
-		let option = taskurl(`${selfdomain}/activity/list?pb=1&cids=${cids}&page=${page}&pageSize=${pageSize}&type=${type}&state=${state}`)
+		let option = taskurl(`${selfDomain}/activity/list?pb=1&cids=${cids}&page=${page}&pageSize=${pageSize}&type=${type}&state=${state}`)
 		delete option.headers['Cookie']
 		$.get(option, (err, resp, data) => {
 			try {
@@ -240,7 +231,7 @@ async function filterGoodList() {
 async function getApplyStateByActivityIds() {
 	function opt(ids) {
 		return new Promise((resolve, reject) => {
-			$.get(taskurl(`${selfdomain}/getApplyStateByActivityIds?activityIds=${ids.join(',')}`), (err, resp, data) => {
+			$.get(taskurl(`${selfDomain}/getApplyStateByActivityIds?activityIds=${ids.join(',')}`), (err, resp, data) => {
 				try {
 					if (err) {
 						console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
@@ -280,7 +271,7 @@ async function getApplyStateByActivityIds() {
 function canTry(good) {
 	return new Promise((resolve, reject) => {
 		let ret = false
-		$.get(taskurl(`${selfdomain}/activity?id=${good.id}`), (err, resp, data) => {
+		$.get(taskurl(`${selfDomain}/activity?id=${good.id}`), (err, resp, data) => {
 			try {
 				if (err) {
 					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
@@ -302,7 +293,7 @@ function canTry(good) {
 
 function isFollowed(good) {
 	return new Promise((resolve, reject) => {
-		$.get(taskurl(`${selfdomain}/isFollowed?id=${good.shopId}`, good.id), (err, resp, data) => {
+		$.get(taskurl(`${selfDomain}/isFollowed?id=${good.shopId}`, good.id), (err, resp, data) => {
 			try {
 				if (err) {
 					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
@@ -321,7 +312,7 @@ function isFollowed(good) {
 
 function followShop(good) {
 	return new Promise((resolve, reject) => {
-		$.get(taskurl(`${selfdomain}/followShop?id=${good.shopId}`, good.id), (err, resp, data) => {
+		$.get(taskurl(`${selfDomain}/followShop?id=${good.shopId}`, good.id), (err, resp, data) => {
 			try {
 				if (err) {
 					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
@@ -360,7 +351,7 @@ async function tryGoodList() {
 
 async function doTry(good) {
 	return new Promise((resolve, reject) => {
-		$.get(taskurl(`${selfdomain}/migrate/apply?activityId=${good.id}&source=1&_s=m`, good.id), (err, resp, data) => {
+		$.get(taskurl(`${selfDomain}/migrate/apply?activityId=${good.id}&source=1&_s=m`, good.id), (err, resp, data) => {
 			try {
 				if (err) {
 					console.log(`🚫 ${arguments.callee.name.toString()} API请求失败，请检查网路\n${JSON.stringify(err)}`)
@@ -398,7 +389,7 @@ async function getSuccessList() {
 				'Referer': 'https://try.m.jd.com/',
 				'Accept-Encoding': 'gzip, deflate, br',
 				'Accept-Language': 'zh,zh-CN;q=0.9,en;q=0.8',
-				'Cookie': cookie
+				'Cookie': $.cookie
 			}
 		}
 		$.get(option, (err, resp, data) => {
@@ -430,9 +421,7 @@ async function showMsg() {
 		$.msg($.name, ``, message, {
 			"open-url": 'https://try.m.jd.com/user'
 		})
-		if ($.isNode()) {
-			await notify.sendNotify(`${$.name} - 账号${$.index} - ${$.nickName}`, message)
-		}
+		await $.notify.sendNotify(`${$.name} - 账号${$.index} - ${$.nickName}`, message)
 	} else {
 		console.log(message)
 	}
@@ -444,7 +433,7 @@ function taskurl(url, goodId) {
 		'headers': {
 			'Host': 'try.m.jd.com',
 			'Accept-Encoding': 'gzip, deflate, br',
-			'Cookie': cookie,
+			'Cookie': $.cookie,
 			'Connection': 'keep-alive',
 			'Accept': '*/*',
 			'UserAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
@@ -454,7 +443,7 @@ function taskurl(url, goodId) {
 	}
 }
 
-function TotalBean() {
+function totalBean() {
 	return new Promise(async resolve => {
 		const options = {
 			"url": `https://wq.jd.com/user/info/QueryJDUserInfo?sceneval=2`,
@@ -464,7 +453,7 @@ function TotalBean() {
 				"Accept-Encoding": "gzip, deflate, br",
 				"Accept-Language": "zh-cn",
 				"Connection": "keep-alive",
-				"Cookie": cookie,
+				"Cookie": $.cookie,
 				"Referer": "https://wqs.jd.com/my/jingdou/my.shtml?sceneval=2",
 				"User-Agent": $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.4.4;14.3;network/4g;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1")
 			},
