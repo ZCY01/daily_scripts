@@ -99,7 +99,7 @@ const typeMap = {
 function requireConfig() {
 	return new Promise(resolve => {
 		console.log('开始获取配置文件\n')
-		$.notify = $.isNode() ? require('./sendNotify') : async () => {}
+		$.notify = $.isNode() ? require('./sendNotify') : {sendNotify:async () => {}}
 
 		//获取 Cookies
 		$.cookiesArr = []
@@ -114,7 +114,7 @@ function requireConfig() {
 			if (process.env.JD_DEBUG && process.env.JD_DEBUG === 'false') console.log = () => {};
 		} else {
 			//IOS等用户直接用NobyDa的jd $.cookie
-			$.cookiesArr = [$.getdata('CookieJD'), $.getdata('CookieJD2'), ...jsonParse($.getdata('CookiesJD') || "[]").map(item => item.$.cookie)].filter(item => !!item);
+			$.cookiesArr = [$.getdata('CookieJD'), $.getdata('CookieJD2'), ...jsonParse($.getdata('CookiesJD') || "[]").map(item => item.cookie)].filter(item => !!item);
 		}
 		console.log(`共${$.cookiesArr.length}个京东账号\n`)
 
