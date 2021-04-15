@@ -20,12 +20,15 @@ const selfDomain = 'https://try.m.jd.com'
 let allGoodList = []
 
 // default params
-let jdNotify = false
-$.pageSize = 12
-let cidsList = ["家用电器", "手机数码", "电脑办公", "家居家装"]
-let typeList = ["普通试用", "闪电试用"]
-let goodFilters = "教程@软件@英语@辅导@培训".split('@')
-let minPrice = 0
+const args = {
+	jdNotify: false,
+	pageSize: 12,
+	cidsList: ["家用电器", "手机数码", "电脑办公", "家居家装"],
+	typeList: ["普通试用", "闪电试用"],
+	goodFilters: "教程@软件@英语@辅导@培训".split('@'),
+	minPrice: 0,
+	maxSupplyCount: 10,
+}
 
 const cidsMap = {
 	"全部商品": "0",
@@ -78,7 +81,7 @@ const typeMap = {
 
 				$.goodList = []
 				$.successList = []
-				if (allGoodList.length == 0) {
+				if (i == 0) {
 					await getGoodList()
 				}
 				await filterGoodList()
@@ -120,23 +123,26 @@ function requireConfig() {
 
 		if ($.isNode()) {
 			if (process.env.JD_TRY_CIDS_KEYS) {
-				cidsList = process.env.JD_TRY_CIDS_KEYS.split('@').filter(key => {
+				args.cidsList = process.env.JD_TRY_CIDS_KEYS.split('@').filter(key => {
 					return Object.keys(cidsMap).includes(key)
 				})
 			}
 			if (process.env.JD_TRY_TYPE_KEYS) {
-				typeList = process.env.JD_TRY_CIDS_KEYS.split('@').filter(key => {
+				args.typeList = process.env.JD_TRY_CIDS_KEYS.split('@').filter(key => {
 					return Object.keys(typeMap).includes(key)
 				})
 			}
 			if (process.env.JD_TRY_GOOD_FILTERS) {
-				goodFilters = process.env.JD_TRY_GOOD_FILTERS.split('@')
+				args.goodFilters = process.env.JD_TRY_GOOD_FILTERS.split('@')
 			}
 			if (process.env.JD_TRY_MIN_PRICE) {
-				minPrice = process.env.JD_TRY_MIN_PRICE * 1
+				args.minPrice = process.env.JD_TRY_MIN_PRICE * 1
 			}
 			if (process.env.JD_TRY_PAGE_SIZE) {
-				$.pageSize = process.env.JD_TRY_PAGE_SIZE * 1
+				args.pageSize = process.env.JD_TRY_PAGE_SIZE * 1
+			}
+			if (process.env.JD_TRY_MAX_SUPPLY_COUNT) {
+				args.maxSupplyCount = process.env.JD_TRY_MAX_SUPPLY_COUNT * 1
 			}
 		} else {
 			let qxCidsList = []
@@ -151,19 +157,19 @@ function requireConfig() {
 				const open = $.getdata(key)
 				if (open == 'true') qxTypeList.push(key)
 			}
-			if (qxCidsList.length != 0) cidsList = qxCidsList
-			if (qxTypeList.length != 0) typeList = qxTypeList
-			if ($.getdata('filter')) goodFilters = $.getdata('filter').split('&')
-			if ($.getdata('min_price')) minPrice = Number($.getdata('min_price'))
-			if ($.getdata('page_size')) $.pageSize = Number($.getdata('page_size'))
-			if ($.pageSize == 0) $.pageSize = 12
+			if (qxCidsList.length != 0) args.cidsList = qxCidsList
+			if (qxTypeList.length != 0) args.typeList = qxTypeList
+			if ($.getdata('filter')) args.goodFilters = $.getdata('filter').split('&')
+			if ($.getdata('min_price')) args.minPrice = Number($.getdata('min_price'))
+			if ($.getdata('page_size')) args.pageSize = Number($.getdata('page_size'))
+			if ($.getdata('max_supply_count')) args.maxSupplyCount = Number($.getdata('max_supply_count'))
+			if (args.pageSize == 0) args.pageSize = 12
 		}
 		resolve()
 	})
 }
 
 function getGoodListByCond(cids, page, pageSize, type, state) {
-
 	return new Promise((resolve, reject) => {
 		let option = taskurl(`${selfDomain}/activity/list?pb=1&cids=${cids}&page=${page}&pageSize=${pageSize}&type=${type}&state=${state}`)
 		delete option.headers['Cookie']
@@ -190,15 +196,15 @@ function getGoodListByCond(cids, page, pageSize, type, state) {
 }
 
 async function getGoodList() {
-	if (cidsList.length === 0) cidsList.push("全部商品")
-	if (typeList.length === 0) typeList.push("全部试用")
-	for (let cidsKey of cidsList) {
-		for (let typeKey of typeList) {
+	if (args.cidsList.length === 0) args.cidsList.push("全部商品")
+	if (args.typeList.length === 0) args.typeList.push("全部试用")
+	for (let cidsKey of args.cidsList) {
+		for (let typeKey of args.typeList) {
 			if (!cidsMap.hasOwnProperty(cidsKey) || !typeMap.hasOwnProperty(typeKey)) continue
 			console.log(`⏰ 获取 ${cidsKey} ${typeKey} 商品列表`)
 			$.totalPages = 1
 			for (let page = 1; page <= $.totalPages; page++) {
-				await getGoodListByCond(cidsMap[cidsKey], page, $.pageSize, typeMap[typeKey], '0')
+				await getGoodListByCond(cidsMap[cidsKey], page, args.pageSize, typeMap[typeKey], '0')
 			}
 		}
 	}
@@ -213,11 +219,15 @@ async function filterGoodList() {
 		// 2. good 距离结束不到10min
 		// 3. good 的结束时间大于一天
 		// 4. good 的价格小于最小的限制
-		if (!good || good.endTime < now + 10 * 60 * 1000 || good.endTime > oneMoreDay || good.jdPrice < minPrice) {
+		// 5. good 的试用数量大于 maxSupplyCount, 视为垃圾商品
+		if (!good || good.endTime < now + 10 * 60 * 1000 || good.endTime > oneMoreDay || good.jdPrice < args.minPrice) {
 			return false
 		}
-		for (let item of goodFilters) {
+		for (let item of args.goodFilters) {
 			if (good.trialName.indexOf(item) != -1) return false
+		}
+		if(good.supplyCount > args.maxSupplyCount){
+			return false
 		}
 		return true
 
@@ -260,7 +270,7 @@ async function getApplyStateByActivityIds() {
 	let list = []
 	for (let good of $.goodList) {
 		list.push(good.id)
-		if (list.length == $.pageSize) {
+		if (list.length == args.pageSize) {
 			await opt(list)
 			list.length = 0
 		}
@@ -417,7 +427,7 @@ async function getSuccessList() {
 
 async function showMsg() {
 	let message = `京东账号${$.index} ${$.nickName || $.UserName}\n🎉 本次申请：${$.totalTry}/${$.totalGoods}个商品🛒\n🎉 ${$.successList.length}个商品待领取🤩\n🎉 结束原因：${$.stopMsg}`
-	if (!jdNotify || jdNotify === 'false') {
+	if (!args.jdNotify || args.jdNotify === 'false') {
 		$.msg($.name, ``, message, {
 			"open-url": 'https://try.m.jd.com/user'
 		})
