@@ -128,7 +128,7 @@ function requireConfig() {
 				})
 			}
 			if (process.env.JD_TRY_TYPE_KEYS) {
-				args.typeList = process.env.JD_TRY_CIDS_KEYS.split('@').filter(key => {
+				args.typeList = process.env.JD_TRY_TYPE_KEYS.split('@').filter(key => {
 					return Object.keys(typeMap).includes(key)
 				})
 			}
