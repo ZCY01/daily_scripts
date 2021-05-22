@@ -26,6 +26,7 @@ const args = {
 	cidsList: ["家用电器", "手机数码", "电脑办公", "家居家装"],
 	typeList: ["普通试用", "闪电试用"],
 	goodFilters: "教程@软件@英语@辅导@培训".split('@'),
+	wantKeywords:"".split('@'), // 优先申请匹配心愿关键词的产品
 	minPrice: 0,
 	maxSupplyCount: 10,
 }
@@ -144,6 +145,9 @@ function requireConfig() {
 			if (process.env.JD_TRY_MAX_SUPPLY_COUNT) {
 				args.maxSupplyCount = process.env.JD_TRY_MAX_SUPPLY_COUNT * 1
 			}
+			if (process.env.JD_TRY_WANT_KEY_WORDS) {
+				args.wantKeywords = process.env.JD_TRY_WANT_KEY_WORDS.split('@')
+			}
 		} else {
 			let qxCidsList = []
 			let qxTypeList = []
@@ -160,6 +164,7 @@ function requireConfig() {
 			if (qxCidsList.length != 0) args.cidsList = qxCidsList
 			if (qxTypeList.length != 0) args.typeList = qxTypeList
 			if ($.getdata('filter')) args.goodFilters = $.getdata('filter').split('&')
+			if ($.getdata('want_key_words')) args.goodFilters = $.getdata('want_key_words').split('&')
 			if ($.getdata('min_price')) args.minPrice = Number($.getdata('min_price'))
 			if ($.getdata('page_size')) args.pageSize = Number($.getdata('page_size'))
 			if ($.getdata('max_supply_count')) args.maxSupplyCount = Number($.getdata('max_supply_count'))
@@ -236,6 +241,25 @@ async function filterGoodList() {
 	$.goodList = $.goodList.sort((a, b) => {
 		return b.jdPrice - a.jdPrice
 	})
+
+	// 如果设置了心愿关键词，则匹配关键的产品放前面，优先申请
+	if (args.wantKeywords.length > 0)
+	{
+		// 匹配的自定义产品标题关键词的商品
+		let wantGoods = [];
+
+		$.goodList = $.goodList.filter((good)=>{
+			for (let item of args.wantKeywords) {
+				if (good.trialName.indexOf(item) !== -1) {
+					wantGoods.push(good)
+					return false;
+				}
+			}
+			return true;
+		})
+
+		$.goodList = wantGoods.concat($.goodList)
+	}
 }
 
 async function getApplyStateByActivityIds() {
