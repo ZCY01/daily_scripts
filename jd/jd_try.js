@@ -159,7 +159,7 @@ function requireConfig() {
 			}
 			if (qxCidsList.length != 0) args.cidsList = qxCidsList
 			if (qxTypeList.length != 0) args.typeList = qxTypeList
-			if ($.getdata('filter')) args.goodFilters = $.getdata('filter').split('&')
+			if ($.getdata('filter')) args.goodFilters = $.getdata('filter').split('@')
 			if ($.getdata('min_price')) args.minPrice = Number($.getdata('min_price'))
 			if ($.getdata('page_size')) args.pageSize = Number($.getdata('page_size'))
 			if ($.getdata('max_supply_count')) args.maxSupplyCount = Number($.getdata('max_supply_count'))
