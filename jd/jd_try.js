@@ -1,9 +1,9 @@
 /*
-update 2021/4/11
+update 2021/6/7
 京东试用：脚本更新地址 https://raw.githubusercontent.com/ZCY01/daily_scripts/main/jd/jd_try.js
 脚本兼容: QuantumultX, Node.js
 
-⚠️ 非常耗时的脚本。最多可能执行半小时！
+⚠️ 非常耗时的脚本！
 每天最多关注300个商店，但用户商店关注上限为500个。
 请配合取关脚本试用，使用 jd_unsubscribe.js 提前取关至少250个商店确保京东试用脚本正常运行。
 ==========================Quantumultx=========================
@@ -35,7 +35,7 @@ const args = {
 	minPrice: 0,
 	// 商品提供最多的数量
 	maxSupplyCount: 10,
-	// 商品试用之间的间隔, 单位：毫秒，随机间隔[applyInterval, applyInterval*2]
+	// 商品试用之间的间隔, 单位：毫秒，随机间隔[applyInterval, applyInterval+2000]
 	applyInterval: 5000
 }
 
@@ -92,8 +92,9 @@ const typeMap = {
 			$.successList = []
 			if (allGoodList.length == 0) {
 				await getGoodList()
+				filterGoodList()
 			}
-			await filterGoodList()
+			await getApplyStateByActivityIds()
 
 			$.totalTry = 0
 			$.totalGoods = $.goodList.length
@@ -219,11 +220,11 @@ async function getGoodList() {
 	}
 }
 
-async function filterGoodList() {
+function filterGoodList() {
 	console.log(`⏰ 过滤商品列表，当前共有${allGoodList.length}个商品`)
 	const now = Date.now()
 	const oneMoreDay = now + 2 * 24 * 60 * 60 * 1000
-	$.goodList = allGoodList.filter(good => {
+	allGoodList = allGoodList.filter(good => {
 		// 1. good 有问题
 		// 2. good 距离结束不到10min
 		// 3. good 的结束时间大于两天
@@ -240,8 +241,7 @@ async function filterGoodList() {
 		}
 		return true
 	})
-	await getApplyStateByActivityIds()
-	$.goodList = $.goodList.sort((a, b) => {
+	allGoodList = allGoodList.sort((a, b) => {
 		let endDayA = Math.trunc(a.endTime / (1000 * 3600 * 24))
 		let endDayB = Math.trunc(b.endTime / (1000 * 3600 * 24))
 		if (endDayA != endDayB) {
@@ -255,7 +255,9 @@ async function filterGoodList() {
 }
 
 async function getApplyStateByActivityIds() {
-	function opt(ids) {
+	function opt(list) {
+		let ids = []
+		list.forEach(good => ids.push(good.id))
 		return new Promise((resolve, reject) => {
 			$.get(taskurl(`${selfDomain}/getApplyStateByActivityIds?activityIds=${ids.join(',')}`), (err, resp, data) => {
 				try {
@@ -269,29 +271,26 @@ async function getApplyStateByActivityIds() {
 				} catch (e) {
 					reject(`⚠️ ${arguments.callee.name.toString()} API返回结果解析出错\n${e}\n${JSON.stringify(data)}`)
 				} finally {
-					$.goodList = $.goodList.filter(good => {
-						for (let id of ids) {
-							if (id == good.id) {
-								return false
-							}
-						}
-						return true
-					})
-					resolve()
+					resolve(ids)
 				}
 			})
 		})
 	}
 
-	let list = []
-	for (let good of $.goodList) {
-		list.push(good.id)
-		if (list.length == args.pageSize) {
-			await opt(list)
-			list.length = 0
-		}
+	$.goodList = []
+	for (let start = 0, end = args.pageSize; start < allGoodList.length; start = end, end += args.pageSize) {
+		let list = allGoodList.slice(start, end)
+		let applied = await opt(list)
+		$.goodList = $.goodList.concat(list.filter(good => {
+			for (let id of applied) {
+				if (id == good.id) {
+					return false
+				}
+			}
+			return true
+		}))
+		if ($.goodList.length >= 320) break
 	}
-	if (list.length) await opt(list)
 }
 
 function canTry(good) {
@@ -369,7 +368,7 @@ async function tryGoodList() {
 		// 如果没有关注且关注失败
 		if (good.shopId && !await isFollowed(good) && !await followShop(good)) continue
 		// 两个申请间隔不能太短，放在下面有利于确保 follwShop 完成
-		await $.wait(Math.floor(Math.random() * args.applyInterval + args.applyInterval))
+		await $.wait(Math.floor(Math.random() * 2000 + args.applyInterval))
 		// 关注完毕，即将试用
 		await doTry(good)
 	}
