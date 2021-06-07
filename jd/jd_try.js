@@ -21,13 +21,22 @@ let allGoodList = []
 
 // default params
 const args = {
+	// 是否通知
 	jdNotify: false,
+	// 每次获取商品数量
 	pageSize: 12,
+	// 试用商铺类型
 	cidsList: ["家用电器", "手机数码", "电脑办公", "家居家装"],
+	// 试用类型
 	typeList: ["普通试用", "闪电试用"],
+	// 商品过滤关键字
 	goodFilters: "教程@软件@英语@辅导@培训".split('@'),
+	// 商品最低价格
 	minPrice: 0,
+	// 商品提供最多的数量
 	maxSupplyCount: 10,
+	// 商品试用之间的间隔, ms
+	applyInterval:5000
 }
 
 const cidsMap = {
@@ -353,7 +362,7 @@ async function tryGoodList() {
 		// 如果没有关注且关注失败
 		if (good.shopId && !await isFollowed(good) && !await followShop(good)) continue
 		// 两个申请间隔不能太短，放在下面有利于确保 follwShop 完成
-		await $.wait(5000)
+		await $.wait(Math.floor(Math.random()*args.applyInterval+args.applyInterval))
 		// 关注完毕，即将试用
 		await doTry(good)
 	}
