@@ -105,7 +105,7 @@ const typeMap = {
 			await showMsg()
 		}
 	}
-    notify.sendNotify(`${$.name}`, notifyMsg);
+    $.notify.sendNotify(`${$.name}`, notifyMsg);
 })()
 	.catch((e) => {
 		console.log(`❗️ ${$.name} 运行错误！\n${e}`)
