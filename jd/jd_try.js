@@ -18,6 +18,7 @@ const $ = new Env('京东试用')
 
 const selfDomain = 'https://try.m.jd.com'
 let allGoodList = []
+let notifyMsg = ''
 
 // default params
 const args = {
@@ -104,6 +105,7 @@ const typeMap = {
 			await showMsg()
 		}
 	}
+    notify.sendNotify(`${$.name}`, notifyMsg);
 })()
 	.catch((e) => {
 		console.log(`❗️ ${$.name} 运行错误！\n${e}`)
@@ -446,7 +448,9 @@ async function showMsg() {
 		$.msg($.name, ``, message, {
 			"open-url": 'https://try.m.jd.com/user'
 		})
-		await $.notify.sendNotify(`${$.name} - 账号${$.index} - ${$.nickName}`, message)
+		
+        if ($.isNode()) {      
+                notifyMsg += `${message}\n\n`;    }
 	} else {
 		console.log(message)
 	}
